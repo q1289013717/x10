@@ -1,8 +1,6 @@
 <template>
-  <AppLayout current-page="training">
+  <AppLayout current-page="training" title="刷题练习" subtitle="BD知识检验">
     <div class="max-w-3xl mx-auto px-4 py-8">
-      <button @click="$router.back()" class="flex items-center gap-1 text-slate-500 hover:text-slate-700 mb-6"><span>←</span> 返回</button>
-      <h1 class="text-2xl font-bold text-slate-900 mb-6">刷题练习</h1>
       <div v-if="!started" class="text-center py-16 bg-white rounded-2xl shadow-sm">
         <span class="text-6xl block mb-6">📝</span>
         <p class="text-xl font-bold text-slate-800 mb-2">BD知识刷题</p>

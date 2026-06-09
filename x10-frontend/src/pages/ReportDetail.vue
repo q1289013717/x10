@@ -1,20 +1,15 @@
 <template>
-  <div class="min-h-screen bg-slate-50">
-    <header class="bg-white shadow-sm border-b border-slate-200 px-4 py-3 sticky top-0 z-10">
-      <div class="flex items-center justify-between max-w-6xl mx-auto">
-        <div class="flex items-center gap-3">
-          <button @click="$router.back()" class="p-2 hover:bg-slate-100 rounded-lg"><span class="text-slate-600">←</span></button>
-          <div class="flex items-center gap-2">
-            <h1 class="font-bold text-slate-800 text-lg">报告详情</h1>
-            <span :class="['px-2 py-0.5 rounded text-xs font-medium', typeStyle.color]">{{ typeStyle.label }}</span>
-          </div>
-        </div>
-        <div class="flex items-center gap-2">
-          <button v-if="isOwner" @click="$router.push({ path: '/report-edit', query: { id: report.id } })" class="p-2 hover:bg-slate-100 rounded-lg text-slate-500" title="编辑">✎</button>
-          <button v-if="isOwner" @click="showDeleteDialog = true" class="p-2 hover:bg-red-50 rounded-lg text-red-500" title="删除">🗑</button>
-        </div>
+  <AppLayout current-page="reports" :show-back="true">
+    <template #title>
+      <div class="flex items-center gap-2">
+        <h1 class="font-bold text-slate-900 text-lg lg:text-xl tracking-tight truncate">报告详情</h1>
+        <span :class="['px-2 py-0.5 rounded text-xs font-medium', typeStyle.color]">{{ typeStyle.label }}</span>
       </div>
-    </header>
+    </template>
+    <template #actions>
+      <button v-if="isOwner" @click="$router.push({ path: '/report-edit', query: { id: report.id } })" class="p-2 hover:bg-slate-100 rounded-lg text-slate-500" title="编辑">✎</button>
+      <button v-if="isOwner" @click="showDeleteDialog = true" class="p-2 hover:bg-red-50 rounded-lg text-red-500" title="删除">🗑</button>
+    </template>
 
     <div v-if="loading" class="flex items-center justify-center min-h-[50vh]">
       <div class="text-center"><div class="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4" /><p class="text-slate-500">加载中...</p></div>
@@ -146,7 +141,7 @@
         </div>
       </div>
     </Teleport>
-  </div>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">

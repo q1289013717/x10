@@ -1,10 +1,9 @@
 <template>
-  <AppLayout current-page="consensus-archive">
+  <AppLayout current-page="consensus-archive" title="共识档案" subtitle="会议纪要与共识管理">
+    <template #actions>
+      <button @click="showAdd = true" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm hover:bg-blue-700">+ 新建会议记录</button>
+    </template>
     <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="flex items-center justify-between mb-6">
-        <div><h1 class="page-title">共识档案</h1><p class="page-subtitle">会议纪要与共识管理</p></div>
-        <button @click="showAdd = true" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm hover:bg-blue-700">+ 新建会议记录</button>
-      </div>
 
       <div class="mb-4 relative"><span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">🔍</span><input v-model="search" placeholder="搜索会议记录..." class="w-full pl-11 pr-4 h-11 rounded-xl border border-slate-200 bg-white text-sm outline-none" /></div>
 

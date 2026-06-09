@@ -1,7 +1,6 @@
 <template>
-  <AppLayout current-page="training">
+  <AppLayout current-page="training" title="文档详情" subtitle="知识库文档">
     <div class="max-w-4xl mx-auto px-4 py-8">
-      <button @click="$router.back()" class="flex items-center gap-1 text-slate-500 hover:text-slate-700 mb-6"><span>←</span> 返回</button>
       <h1 class="text-2xl font-bold text-slate-900 mb-6">{{ doc.title }}</h1>
       <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 space-y-6">
         <div v-for="(section, idx) in doc.sections" :key="idx" class="p-4 bg-slate-50 rounded-xl">

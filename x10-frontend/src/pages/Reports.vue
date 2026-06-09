@@ -1,24 +1,13 @@
 <template>
-  <div class="min-h-screen bg-slate-50">
-    <header class="bg-white shadow-sm border-b border-slate-200 px-4 py-3 sticky top-0 z-10">
-      <div class="flex items-center justify-between max-w-6xl mx-auto">
-        <div class="flex items-center gap-3">
-          <button @click="$router.back()" class="p-2 hover:bg-slate-100 rounded-lg"><span class="text-slate-600">←</span></button>
-          <div>
-            <h1 class="font-bold text-slate-800 text-lg">{{ pageTitle }}</h1>
-            <p class="text-xs text-slate-500">{{ isManager ? '查看和管理所有员工的报告' : '查看和管理我的报告' }}</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-2">
-          <button v-if="isManager" @click="showTypeModal = true" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 flex items-center gap-1">
-            ✎ 管理类型
-          </button>
-          <button v-for="t in reportTypes.filter((x: any) => x.value !== 'all').slice(0, 2)" :key="t.value" @click="$router.push({ path: '/report-edit', query: { type: t.value } })" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 flex items-center gap-1">
-            + {{ t.label }}
-          </button>
-        </div>
-      </div>
-    </header>
+  <AppLayout current-page="reports" :title="pageTitle" :subtitle="isManager ? '查看和管理所有员工的报告' : '查看和管理我的报告'">
+    <template #actions>
+      <button v-if="isManager" @click="showTypeModal = true" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 flex items-center gap-1">
+        ✎ 管理类型
+      </button>
+      <button v-for="t in reportTypes.filter((x: any) => x.value !== 'all').slice(0, 2)" :key="t.value" @click="$router.push({ path: '/report-edit', query: { type: t.value } })" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 flex items-center gap-1">
+        + {{ t.label }}
+      </button>
+    </template>
 
     <main class="max-w-6xl mx-auto p-4 lg:p-6 pb-24">
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -124,7 +113,7 @@
         </div>
       </div>
     </Teleport>
-  </div>
+</AppLayout>
 </template>
 
 <script setup lang="ts">

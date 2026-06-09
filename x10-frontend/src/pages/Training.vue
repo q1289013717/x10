@@ -1,14 +1,10 @@
 <template>
-  <AppLayout current-page="training">
+  <AppLayout current-page="training" title="X10成长中心" subtitle="知识库、BD自查手册与刷题系统">
+    <template #actions>
+      <router-link to="/training-quiz" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm hover:bg-blue-700">📝 刷题</router-link>
+      <router-link to="/training-problem" class="px-4 py-2 bg-amber-600 text-white rounded-xl text-sm hover:bg-amber-700">📋 难题库</router-link>
+    </template>
     <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="flex items-center justify-between mb-6">
-        <div><h1 class="page-title">X10成长中心</h1><p class="page-subtitle">知识库、BD自查手册与刷题系统</p></div>
-        <div class="flex gap-2">
-          <router-link to="/training-quiz" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm hover:bg-blue-700">📝 刷题</router-link>
-          <router-link to="/training-problem" class="px-4 py-2 bg-amber-600 text-white rounded-xl text-sm hover:bg-amber-700">📋 难题库</router-link>
-        </div>
-      </div>
-
       <!-- 搜索 -->
       <div class="mb-6"><div class="relative"><span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">🔍</span><input v-model="search" placeholder="搜索知识条目..." class="w-full pl-11 pr-4 h-12 bg-white rounded-xl border border-slate-200 text-sm outline-none focus:border-blue-500" /></div></div>
 

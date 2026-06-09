@@ -1,8 +1,6 @@
 <template>
-  <AppLayout current-page="training">
+  <AppLayout current-page="training" title="难题库" subtitle="疑难问题收集">
     <div class="max-w-3xl mx-auto px-4 py-8">
-      <button @click="$router.back()" class="flex items-center gap-1 text-slate-500 hover:text-slate-700 mb-6"><span>←</span> 返回</button>
-      <h1 class="text-2xl font-bold text-slate-900 mb-6">难题库</h1>
       <div class="mb-6 flex gap-2">
         <input v-model="search" placeholder="搜索难题..." class="flex-1 h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:border-blue-500" />
         <button @click="showAdd = true" class="px-4 py-2 bg-amber-600 text-white rounded-xl text-sm hover:bg-amber-700">+ 添加难题</button>

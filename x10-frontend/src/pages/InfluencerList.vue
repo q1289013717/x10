@@ -1,14 +1,10 @@
 <template>
-  <AppLayout current-page="influencer-list">
+  <AppLayout current-page="influencer-list" title="达人合作台账" subtitle="管理达人合作记录与数据">
+    <template #actions>
+      <router-link to="/influencer-summary" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm hover:bg-blue-700">📊 汇总统计</router-link>
+      <button @click="openForm()" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm hover:bg-emerald-700">+ 新增记录</button>
+    </template>
     <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="flex items-center justify-between mb-6">
-        <div><h1 class="page-title">达人合作台账</h1><p class="page-subtitle">管理达人合作记录与数据</p></div>
-        <div class="flex gap-2">
-          <router-link to="/influencer-summary" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm hover:bg-blue-700">📊 汇总统计</router-link>
-          <button @click="openForm()" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm hover:bg-emerald-700">+ 新增记录</button>
-        </div>
-      </div>
-
       <!-- 筛选 -->
       <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100 mb-6">
         <div class="flex flex-wrap gap-3">

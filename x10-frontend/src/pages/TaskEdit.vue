@@ -1,43 +1,12 @@
 <template>
-  <div class="min-h-screen bg-slate-50">
-    <!-- 顶部导航 -->
-    <header class="bg-white shadow-sm border-b border-slate-200 px-4 py-3 sticky top-0 z-10">
-      <div class="flex items-center justify-between max-w-6xl mx-auto">
-        <div class="flex items-center gap-3">
-          <button @click="$router.back()" class="p-2 hover:bg-slate-100 rounded-lg">
-            <span class="text-slate-600">←</span>
-          </button>
-          <div>
-            <h1 class="font-bold text-slate-800 text-lg">
-              {{ isEdit ? '编辑任务' : '新建任务' }}
-            </h1>
-            <p class="text-xs text-slate-500 flex items-center gap-1">
-              <span>📅</span>
-              {{ date }}
-              <span v-if="isEdit" class="ml-2 bg-slate-100 text-slate-600 rounded px-1.5 py-0.5 text-[10px]">编辑中</span>
-            </p>
-          </div>
-        </div>
-        <div class="flex items-center gap-2">
-          <button @click="$router.back()" class="hidden sm:flex items-center gap-1 px-4 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 text-sm">
-            ✕ 取消
-          </button>
-          <button
-            @click="handleSubmit"
-            :disabled="loading"
-            class="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2.5 text-sm font-medium flex items-center gap-2 shadow-lg shadow-blue-600/25 transition-all disabled:opacity-50"
-          >
-            <template v-if="loading">
-              <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              保存中...
-            </template>
-            <template v-else>
-              💾 {{ isEdit ? '更新' : '保存' }}
-            </template>
-          </button>
-        </div>
-      </div>
-    </header>
+  <AppLayout current-page="calendar" :show-back="true" :title="pageTitle" :subtitle="'📅 ' + date + (isEdit ? ' · 编辑中' : '')">
+    <template #actions>
+      <button @click="$router.back()" class="px-4 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 text-sm">✕ 取消</button>
+      <button @click="handleSubmit" :disabled="loading" class="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2.5 text-sm font-medium flex items-center gap-2 shadow-lg shadow-blue-600/25 transition-all disabled:opacity-50">
+        <template v-if="loading"><span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />保存中...</template>
+        <template v-else>💾 {{ isEdit ? '更新' : '保存' }}</template>
+      </button>
+    </template>
 
     <!-- 表单内容 -->
     <div class="p-4 lg:p-6 max-w-4xl mx-auto">
@@ -287,7 +256,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
@@ -303,6 +272,7 @@ const taskStore = useTaskStore()
 const date = ref((route.query.date as string) || new Date().toISOString().split('T')[0])
 const taskId = ref(route.query.taskId ? String(route.query.taskId) : null)
 const isEdit = computed(() => !!taskId.value)
+const pageTitle = computed(() => isEdit.value ? '编辑任务' : '新建任务')
 const loading = ref(false)
 const expandedTask = ref<number | null>(null)
 

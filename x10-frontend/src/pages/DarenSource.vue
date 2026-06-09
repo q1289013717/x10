@@ -1,10 +1,6 @@
 <template>
-  <AppLayout current-page="darensource">
+  <AppLayout current-page="darensource" title="达人资源库" subtitle="资源录入、查询与统计">
     <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="flex items-center justify-between mb-6">
-        <div><h1 class="page-title">达人资源库</h1><p class="page-subtitle">资源录入、查询与统计</p></div>
-      </div>
-
       <!-- Tab 切换 -->
       <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100 mb-6 flex flex-wrap gap-2">
         <button v-for="tab in tabs" :key="tab.id" @click="activeTab = tab.id" :class="['px-4 py-2 rounded-lg text-sm transition-all', activeTab === tab.id ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-600 hover:bg-slate-100']">{{ tab.label }}</button>

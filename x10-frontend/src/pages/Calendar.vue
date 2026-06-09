@@ -1,19 +1,10 @@
 <template>
-  <div class="min-h-screen bg-[#f5f6f7] flex">
-    <!-- 桌面端侧边栏 -->
-    <Sidebar v-if="!isMobile" current-page="calendar" />
-
-    <!-- 主内容区 -->
-    <div class="flex-1 flex flex-col min-h-screen">
+  <AppLayout current-page="calendar" :show-back="false">
+    <!-- ====== Calendar 自定义 Header ====== -->
       <!-- 顶部导航 -->
       <header class="bg-white/80 backdrop-blur-xl border-b border-slate-100 px-4 py-4 lg:px-6 sticky top-0 z-40">
         <div class="flex items-center justify-between max-w-[1600px] mx-auto">
           <div class="flex items-center gap-4">
-            <button v-if="isMobile" class="p-2 hover:bg-slate-100 rounded-lg" @click="sidebarOpen = !sidebarOpen">
-              <span class="block w-5 h-0.5 bg-slate-600 mb-1" />
-              <span class="block w-5 h-0.5 bg-slate-600 mb-1" />
-              <span class="block w-4 h-0.5 bg-slate-600" />
-            </button>
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
                 <span class="text-white text-lg">📋</span>
@@ -357,10 +348,6 @@
         </div>
       </div>
 
-      <!-- 移动端底部导航 -->
-      <BottomNav v-if="isMobile" current-page="calendar" />
-    </div>
-
     <!-- 任务详情弹窗 -->
     <Teleport to="body">
       <div v-if="selectedDate" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="closeDetail">
@@ -417,16 +404,6 @@
       </div>
     </Teleport>
 
-    <!-- 移动端侧边栏 -->
-    <Teleport to="body">
-      <div v-if="isMobile && sidebarOpen" class="fixed inset-0 z-50">
-        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="sidebarOpen = false" />
-        <div class="absolute left-0 top-0 bottom-0 w-72 bg-white shadow-2xl">
-          <Sidebar current-page="calendar" @navigate="sidebarOpen = false" />
-        </div>
-      </div>
-    </Teleport>
-
     <!-- Toast 通知 -->
     <Teleport to="body">
       <div v-if="toast.show" class="fixed top-4 right-4 z-[100] bg-white rounded-xl shadow-lg border border-slate-100 px-5 py-3 animate-[fade-in_0.3s_ease-out]">
@@ -434,14 +411,12 @@
         <p class="text-slate-500 text-xs mt-1">{{ toast.desc }}</p>
       </div>
     </Teleport>
-  </div>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import Sidebar from '@/components/Sidebar.vue'
-import BottomNav from '@/components/BottomNav.vue'
 import { useTaskStore } from '@/stores/tasks'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/api'
@@ -454,8 +429,6 @@ const authStore = useAuthStore()
 const currentDate = ref(new Date())
 const viewMode = ref('month')
 const tasks = ref<Record<string, any>>({})
-const isMobile = ref(false)
-const sidebarOpen = ref(false)
 const selectedDate = ref<any>(null)
 const draggedTask = ref<any>(null)
 const dragOverDate = ref('')
@@ -784,16 +757,12 @@ onMounted(() => {
   const saved = localStorage.getItem('company_name')
   if (saved) companyName.value = saved
 
-  const checkMobile = () => { isMobile.value = window.innerWidth < 1024 }
-  checkMobile()
-  window.addEventListener('resize', checkMobile)
   document.addEventListener('click', handleGlobalClick)
 
   loadTasks()
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', () => {})
   document.removeEventListener('click', handleGlobalClick)
 })
 </script>

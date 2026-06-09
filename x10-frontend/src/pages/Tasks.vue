@@ -1,22 +1,10 @@
 <template>
-  <div class="min-h-screen bg-[#f5f6f7]">
-    <!-- 顶部导航 -->
-    <header class="bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 py-4 sticky top-0 z-10">
-      <div class="max-w-[1600px] mx-auto flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <button @click="$router.push('/calendar')" class="p-2 hover:bg-slate-100 rounded-lg transition-all">
-            <span class="text-slate-600">←</span>
-          </button>
-          <div>
-            <h1 class="text-xl font-bold text-slate-900 tracking-tight">任务列表</h1>
-            <p class="text-sm text-slate-500">管理所有任务</p>
-          </div>
-        </div>
-        <button @click="$router.push('/task-edit')" class="bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl px-5 h-11 shadow-lg shadow-blue-600/25 transition-all duration-200 flex items-center">
-          <span class="mr-2">+</span> 新建任务
-        </button>
-      </div>
-    </header>
+  <AppLayout current-page="calendar" title="任务列表" subtitle="管理所有任务">
+    <template #actions>
+      <button @click="$router.push('/task-edit')" class="bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl px-5 h-11 shadow-lg shadow-blue-600/25 transition-all duration-200 flex items-center">
+        <span class="mr-2">+</span> 新建任务
+      </button>
+    </template>
 
     <!-- 统计卡片 -->
     <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -199,7 +187,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">

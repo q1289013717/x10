@@ -1,7 +1,6 @@
 <template>
-  <AppLayout current-page="settings">
+  <AppLayout current-page="settings" title="系统设置" subtitle="系统配置与管理">
     <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 class="page-title mb-6">系统设置</h1>
 
       <div class="flex gap-2 mb-6">
         <button v-for="tab in tabs" :key="tab.key" @click="activeTab = tab.key" :class="['px-4 py-2 rounded-xl text-sm transition-all', activeTab === tab.key ? 'bg-blue-600 text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50']">{{ tab.label }}</button>

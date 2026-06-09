@@ -1,5 +1,5 @@
 <template>
-  <AppLayout current-page="home">
+  <AppLayout current-page="home" :show-back="false">
     <div class="min-h-screen bg-[#f5f6f7]">
       <!-- 顶部欢迎区域 — 巨量引擎风格 -->
       <div class="bg-gradient-to-br from-[#1a1f2e] via-[#1e3a5f] to-[#1a1f2e] text-white relative overflow-hidden">

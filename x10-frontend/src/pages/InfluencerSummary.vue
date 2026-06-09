@@ -1,8 +1,6 @@
 <template>
-  <AppLayout current-page="influencer-summary">
+  <AppLayout current-page="influencer-summary" title="达人汇总统计" subtitle="达人合作数据分析">
     <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <button @click="$router.back()" class="flex items-center gap-1 text-slate-500 hover:text-slate-700 mb-6"><span>←</span> 返回</button>
-      <h1 class="page-title mb-6">达人汇总统计</h1>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100"><p class="text-sm text-slate-500">总记录数</p><p class="text-2xl font-bold text-slate-900 mt-2">{{ stats.total }}</p></div>
         <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100"><p class="text-sm text-slate-500">合作中</p><p class="text-2xl font-bold text-blue-600 mt-2">{{ stats.cooperating }}</p></div>
