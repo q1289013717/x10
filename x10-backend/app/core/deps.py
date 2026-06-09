@@ -9,7 +9,7 @@ from app.models.user import User
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
-ADMIN_TYPES = ["集团", "分公司管理员", "admin", "manager", "管理员"]
+ADMIN_TYPES = ["集团", "集团管理员", "分公司管理员", "admin", "manager", "管理员"]
 
 
 def is_admin_user(user: User) -> bool:
