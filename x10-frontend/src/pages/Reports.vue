@@ -9,7 +9,7 @@
       </button>
     </template>
 
-    <main class="max-w-6xl mx-auto p-4 lg:p-6 pb-24">
+    <div class="max-w-6xl mx-auto p-4 lg:p-6 pb-24">
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div class="bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow" @click="filterApprovalStatus = 'all'">
           <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700">📄</div><div><p class="text-2xl font-bold text-slate-800">{{ stats.total }}</p><p class="text-xs text-slate-500">全部报告</p></div></div>
@@ -90,7 +90,7 @@
           </div>
         </div>
       </div>
-    </main>
+    </div>
 
     <!-- 批复对话框 -->
     <Teleport to="body">

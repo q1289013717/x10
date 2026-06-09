@@ -1,125 +1,69 @@
 <template>
-  <AppLayout current-page="calendar" :show-back="false">
-    <!-- ====== Calendar 自定义 Header ====== -->
-      <!-- 顶部导航 -->
-      <header class="bg-white/80 backdrop-blur-xl border-b border-slate-100 px-4 py-4 lg:px-6 sticky top-0 z-40">
-        <div class="flex items-center justify-between max-w-[1600px] mx-auto">
-          <div class="flex items-center gap-4">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <span class="text-white text-lg">📋</span>
+  <AppLayout current-page="calendar" title="X10成长日程" :subtitle="companyName">
+    <template #actions>
+      <!-- 视图切换 -->
+      <div class="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
+        <button v-for="v in views" :key="v.key" @click="viewMode = v.key"
+          :class="['px-3 py-1.5 rounded-lg transition-all duration-200 text-sm font-medium', viewMode === v.key ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:text-slate-800']">
+          {{ v.label }}</button>
+      </div>
+      <router-link to="/settings" class="p-2 hover:bg-slate-100 rounded-xl flex-shrink-0" title="设置">
+        <span class="text-slate-500 text-lg">⚙</span>
+      </router-link>
+    </template>
+
+    <!-- 统计卡片 -->
+    <div class="bg-gradient-to-b from-white to-[#f5f6f7] border-b border-slate-100 px-4 py-5 lg:px-6">
+      <div class="max-w-[1600px] mx-auto">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 rounded-2xl p-5 shadow-lg shadow-blue-500/20 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2" />
+            <div class="relative">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center"><span class="text-white text-sm">🎯</span></div>
+                <span class="text-sm font-medium text-blue-100">目标营业额</span>
               </div>
-              <div>
-                <h1 class="font-bold text-slate-900 text-xl tracking-tight">X10成长日程</h1>
-                <p class="text-xs text-slate-500 cursor-pointer" @click="editingCompany = true">
-                  {{ companyName }}
-                </p>
-                <input
-                  v-if="editingCompany"
-                  ref="companyInput"
-                  v-model="companyName"
-                  class="text-xs border rounded px-1 py-0.5"
-                  @blur="saveCompanyName"
-                  @keyup.enter="saveCompanyName"
-                />
+              <p class="text-2xl font-bold text-white tracking-tight">¥{{ (monthlyStats.totalTarget / 10000).toFixed(1) }}万</p>
+            </div>
+          </div>
+          <div class="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 rounded-2xl p-5 shadow-lg shadow-emerald-500/20 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2" />
+            <div class="relative">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center"><span class="text-white text-sm">📈</span></div>
+                <span class="text-sm font-medium text-emerald-100">已完成</span>
+              </div>
+              <p class="text-2xl font-bold text-white tracking-tight">¥{{ (monthlyStats.totalCompleted / 10000).toFixed(1) }}万</p>
+            </div>
+          </div>
+          <div class="bg-gradient-to-br from-cyan-500 via-cyan-600 to-blue-600 rounded-2xl p-5 shadow-lg shadow-cyan-500/20 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2" />
+            <div class="relative">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center"><span class="text-white text-sm">📊</span></div>
+                <span class="text-sm font-medium text-cyan-100">完成率</span>
+              </div>
+              <p class="text-2xl font-bold text-white tracking-tight">{{ completionRate }}%</p>
+              <div class="mt-3 h-2 bg-white/20 rounded-full overflow-hidden">
+                <div class="h-full bg-white rounded-full transition-all duration-500" :style="{ width: completionRate + '%' }" />
               </div>
             </div>
           </div>
-
-          <div class="flex items-center gap-3 flex-1 min-w-0">
-            <!-- 视图切换 -->
-            <div class="hidden md:flex items-center gap-1 bg-slate-100 rounded-xl p-1 flex-shrink-0">
-              <button
-                v-for="v in views"
-                :key="v.key"
-                @click="viewMode = v.key"
-                :class="[
-                  'px-3 py-1.5 rounded-lg transition-all duration-200 text-sm font-medium',
-                  viewMode === v.key ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:text-slate-800'
-                ]"
-              >{{ v.label }}</button>
-            </div>
-            <div class="flex md:hidden items-center gap-1 bg-slate-100 rounded-lg p-1 flex-shrink-0">
-              <button
-                v-for="v in views"
-                :key="v.key"
-                @click="viewMode = v.key"
-                :class="[
-                  'px-2 py-1 rounded-lg text-xs transition-all',
-                  viewMode === v.key ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600'
-                ]"
-              >{{ v.label }}</button>
-            </div>
-
-            <div class="flex-1" />
-
-            <router-link to="/settings" class="p-2 hover:bg-slate-100 rounded-xl">
-              <span class="text-slate-600 text-lg">⚙</span>
-            </router-link>
-          </div>
-        </div>
-      </header>
-
-      <!-- 统计卡片 -->
-      <div class="bg-gradient-to-b from-white to-[#f5f6f7] border-b border-slate-100 px-4 py-5 lg:px-6">
-        <div class="max-w-[1600px] mx-auto">
-          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 rounded-2xl p-5 shadow-lg shadow-blue-500/20 relative overflow-hidden">
-              <div class="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2" />
-              <div class="relative">
-                <div class="flex items-center gap-3 mb-3">
-                  <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                    <span class="text-white text-sm">🎯</span>
-                  </div>
-                  <span class="text-sm font-medium text-blue-100">目标营业额</span>
-                </div>
-                <p class="text-2xl font-bold text-white tracking-tight">¥{{ (monthlyStats.totalTarget / 10000).toFixed(1) }}万</p>
+          <div class="bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 rounded-2xl p-5 shadow-lg shadow-amber-500/20 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2" />
+            <div class="relative">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center"><span class="text-white text-sm">👥</span></div>
+                <span class="text-sm font-medium text-amber-100">任务数</span>
               </div>
-            </div>
-            <div class="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 rounded-2xl p-5 shadow-lg shadow-emerald-500/20 relative overflow-hidden">
-              <div class="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2" />
-              <div class="relative">
-                <div class="flex items-center gap-3 mb-3">
-                  <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                    <span class="text-white text-sm">📈</span>
-                  </div>
-                  <span class="text-sm font-medium text-emerald-100">已完成</span>
-                </div>
-                <p class="text-2xl font-bold text-white tracking-tight">¥{{ (monthlyStats.totalCompleted / 10000).toFixed(1) }}万</p>
-              </div>
-            </div>
-            <div class="bg-gradient-to-br from-cyan-500 via-cyan-600 to-blue-600 rounded-2xl p-5 shadow-lg shadow-cyan-500/20 relative overflow-hidden">
-              <div class="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2" />
-              <div class="relative">
-                <div class="flex items-center gap-3 mb-3">
-                  <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                    <span class="text-white text-sm">📊</span>
-                  </div>
-                  <span class="text-sm font-medium text-cyan-100">完成率</span>
-                </div>
-                <p class="text-2xl font-bold text-white tracking-tight">{{ completionRate }}%</p>
-                <div class="mt-3 h-2 bg-white/20 rounded-full overflow-hidden">
-                  <div class="h-full bg-white rounded-full transition-all duration-500" :style="{ width: completionRate + '%' }" />
-                </div>
-              </div>
-            </div>
-            <div class="bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 rounded-2xl p-5 shadow-lg shadow-amber-500/20 relative overflow-hidden">
-              <div class="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2" />
-              <div class="relative">
-                <div class="flex items-center gap-3 mb-3">
-                  <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                    <span class="text-white text-sm">👥</span>
-                  </div>
-                  <span class="text-sm font-medium text-amber-100">任务数</span>
-                </div>
-                <p class="text-2xl font-bold text-white tracking-tight">{{ monthlyStats.totalTasks }}个</p>
-              </div>
+              <p class="text-2xl font-bold text-white tracking-tight">{{ monthlyStats.totalTasks }}个</p>
             </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- 日历控制栏 -->
+    <!-- 日历控制栏 -->
       <div class="bg-white border-b border-slate-100 px-4 py-4 lg:px-6">
         <div class="max-w-[1600px] mx-auto flex items-center justify-between">
           <div class="flex items-center gap-3">

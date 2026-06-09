@@ -1,6 +1,6 @@
 <template>
   <AppLayout current-page="home" :show-back="false">
-    <div class="min-h-screen bg-[#f5f6f7]">
+    <div>
       <!-- 顶部欢迎区域 — 巨量引擎风格 -->
       <div class="bg-gradient-to-br from-[#1a1f2e] via-[#1e3a5f] to-[#1a1f2e] text-white relative overflow-hidden">
         <div class="absolute inset-0">
@@ -31,7 +31,7 @@
       </div>
 
       <!-- 统计卡片 — 大厂风格 -->
-      <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 -mt-6">
+      <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 mt-8">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           <!-- 今日目标 -->
           <div class="bg-white rounded-2xl shadow-lg border border-slate-100 hover:shadow-xl hover:border-slate-200 transition-all duration-200 group min-w-0">
