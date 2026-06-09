@@ -1,5 +1,5 @@
 <template>
-  <AppLayout current-page="training" title="刷题中心" subtitle="巩固知识 · 提升能力">
+  <AppLayout current-page="training-quiz" title="刷题中心" subtitle="巩固知识 · 提升能力">
     <template #actions>
       <template v-if="isAdmin && !quizMode && !showResult">
         <button @click="showUploadModal = true" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm hover:bg-emerald-700 transition-colors flex items-center gap-1">
