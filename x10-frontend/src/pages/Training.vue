@@ -19,7 +19,7 @@
 
       <!-- 文档列表 -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <router-link v-for="doc in filteredDocs" :key="doc.id" :to="`/training/${doc.id}`" class="bg-white rounded-xl p-5 shadow-sm border border-slate-100 hover:shadow-md hover:border-slate-200 transition-all">
+        <router-link v-for="doc in filteredDocs" :key="doc.id" :to="`/training-detail/${doc.id}`" class="bg-white rounded-xl p-5 shadow-sm border border-slate-100 hover:shadow-md hover:border-slate-200 transition-all">
           <div class="flex items-start gap-3"><span class="text-3xl">{{ doc.icon }}</span><div><h3 class="font-medium text-slate-800">{{ doc.title }}</h3><p class="text-sm text-slate-500 mt-1">{{ doc.desc }}</p></div></div>
         </router-link>
       </div>

@@ -180,6 +180,7 @@ const editValue = ref('')
 const stats = ref({ pendingTasks: 0, completionRate: 0 })
 
 const menuItems = [
+  { id: 'home', label: '首页', emoji: '🏠', description: '控制台与数据概览' },
   { id: 'calendar', label: 'X10成长日程', emoji: '📅', description: '查看和管理每日任务' },
   { id: 'reports', label: 'X10成长复盘', emoji: '📝', description: '每日复盘/每周复盘/月度复盘' },
   { id: 'influencer-list', label: '达人合作台账', emoji: '📊', description: '管理达人合作记录' },

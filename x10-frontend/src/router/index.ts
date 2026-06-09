@@ -64,7 +64,7 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
-      path: '/training-detail',
+      path: '/training-detail/:id',
       name: 'training-detail',
       component: () => import('@/pages/TrainingDetail.vue'),
       meta: { requiresAuth: true },
@@ -113,21 +113,41 @@ const router = createRouter({
     },
     {
       path: '/:pathMatch(.*)*',
-      redirect: '/login',
+      name: 'not-found',
+      component: () => import('@/pages/NotFound.vue'),
     },
   ],
 })
 
 // 路由守卫 — 检查认证状态
-router.beforeEach((to, _from, next) => {
-  const authStore = useAuthStore()
+router.beforeEach(async (to, _from, next) => {
   const token = localStorage.getItem('access_token')
 
   if (to.meta.requiresAuth) {
     if (!token) {
       next('/login')
-    } else {
+      return
+    }
+
+    // 如果 AuthStore 中已有用户信息，直接放行（已验证过）
+    const authStore = useAuthStore()
+    if (authStore.user) {
       next()
+      return
+    }
+
+    // 尝试从 localStorage 恢复用户信息，或调用 /auth/me 验证
+    authStore.restore()
+    if (authStore.user) {
+      next()
+      return
+    }
+
+    try {
+      await authStore.fetchCurrentUser()
+      next()
+    } catch {
+      next('/login')
     }
   } else {
     next()

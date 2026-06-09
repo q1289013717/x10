@@ -141,7 +141,7 @@ const activeTab = ref('all')
 const searchQuery = ref('')
 const filterDepartment = ref('all')
 const filterApprovalStatus = ref('all')
-const pageTitle = ref('X10成长复盘')
+const pageTitle = ref('工作报告')
 const showTypeModal = ref(false)
 const showApprovalDialog = ref(false)
 const selectedReport = ref<any>(null)
@@ -150,9 +150,9 @@ const approvalComment = ref('')
 
 const reportTypes = ref([
   { value: 'all', label: '全部', color: 'bg-slate-100 text-slate-700' },
-  { value: 'daily', label: '日报', color: 'bg-blue-100 text-blue-700' },
-  { value: 'weekly', label: '周报', color: 'bg-emerald-100 text-emerald-700' },
-  { value: 'monthly', label: '月报', color: 'bg-purple-100 text-purple-700' }
+  { value: 'daily', label: '每日复盘', color: 'bg-blue-100 text-blue-700' },
+  { value: 'weekly', label: '每周复盘', color: 'bg-emerald-100 text-emerald-700' },
+  { value: 'monthly', label: '月度复盘', color: 'bg-purple-100 text-purple-700' }
 ])
 
 const allReports = ref<any[]>([])

@@ -27,13 +27,18 @@ api.interceptors.request.use(
 )
 
 // 响应拦截器 — 处理 401 自动跳转登录
+let isRedirectingToLogin = false
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('access_token')
-      localStorage.removeItem('current_user')
-      router.push('/login')
+      // 避免重复跳转，且不在登录页跳转
+      if (!isRedirectingToLogin && router.currentRoute.value.path !== '/login') {
+        isRedirectingToLogin = true
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('current_user')
+        router.push('/login').finally(() => { isRedirectingToLogin = false })
+      }
     }
     return Promise.reject(error)
   }

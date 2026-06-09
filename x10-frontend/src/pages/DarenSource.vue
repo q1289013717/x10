@@ -3,44 +3,205 @@
     <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div class="flex items-center justify-between mb-6">
         <div><h1 class="page-title">达人资源库</h1><p class="page-subtitle">资源录入、查询与统计</p></div>
-        <div class="flex gap-2">
-          <button @click="activeTab = activeTab === 'add' ? 'list' : 'add'" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm">{{ activeTab === 'add' ? '📋 查看列表' : '+ 录入资源' }}</button>
-        </div>
       </div>
 
+      <!-- Tab 切换 -->
       <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100 mb-6 flex flex-wrap gap-2">
-        <button v-for="tab in ['add', 'list']" :key="tab" @click="activeTab = tab" :class="['px-4 py-2 rounded-lg text-sm transition-all', activeTab === tab ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-600 hover:bg-slate-100']">{{ tab === 'add' ? '录入资源' : '资源列表' }}</button>
+        <button v-for="tab in tabs" :key="tab.id" @click="activeTab = tab.id" :class="['px-4 py-2 rounded-lg text-sm transition-all', activeTab === tab.id ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-600 hover:bg-slate-100']">{{ tab.label }}</button>
       </div>
 
-      <!-- 录入表单 -->
-      <div v-if="activeTab === 'add'" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 max-w-2xl">
-        <div class="space-y-4">
-          <input v-model="resource.darenName" placeholder="达人名称 *" class="w-full h-11 px-4 rounded-xl border border-slate-200 text-sm outline-none" />
-          <div class="grid grid-cols-2 gap-4">
-            <select v-model="resource.platform" class="h-11 px-3 rounded-xl border border-slate-200 text-sm outline-none"><option value="">选择平台</option><option v-for="p in platforms" :key="p" :value="p">{{ p }}</option></select>
-            <input v-model="resource.fans" type="number" placeholder="粉丝数" class="h-11 px-4 rounded-xl border border-slate-200 text-sm outline-none" />
+      <!-- +资源录入 -->
+      <div v-if="activeTab === 'add'" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 max-w-3xl">
+        <h3 class="font-bold text-slate-800 text-lg mb-6">+ 达人资源录入</h3>
+
+        <!-- 基本信息 -->
+        <div class="mb-6">
+          <h4 class="text-sm font-semibold text-slate-600 mb-4 pb-2 border-b border-slate-100">基本信息</h4>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="text-xs font-medium text-slate-500 mb-1 block">姓名 <span class="text-red-400">*</span></label>
+              <input v-model="resource.name" placeholder="请输入姓名" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-500 mb-1 block">日期 <span class="text-red-400">*</span></label>
+              <input v-model="resource.date" type="date" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-500 mb-1 block">达人排号ID <span class="text-red-400">*</span></label>
+              <input v-model="resource.code" placeholder="如: DB006" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+            </div>
           </div>
-          <div class="grid grid-cols-2 gap-4">
-            <select v-model="resource.category" class="h-11 px-3 rounded-xl border border-slate-200 text-sm outline-none"><option value="">选择品类</option><option v-for="c in categories" :key="c" :value="c">{{ c }}</option></select>
-            <select v-model="resource.position" class="h-11 px-3 rounded-xl border border-slate-200 text-sm outline-none"><option value="">对接人身份</option><option v-for="p in positions" :key="p" :value="p">{{ p }}</option></select>
-          </div>
-          <input v-model="resource.contact" placeholder="联系方式" class="w-full h-11 px-4 rounded-xl border border-slate-200 text-sm outline-none" />
-          <textarea v-model="resource.remark" placeholder="备注" rows="3" class="w-full p-3 rounded-xl border border-slate-200 text-sm outline-none resize-none" />
-          <button @click="saveResource" :disabled="!resource.darenName" class="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm disabled:opacity-50">💾 保存资源</button>
         </div>
+
+        <!-- 平台信息 -->
+        <div class="mb-6">
+          <h4 class="text-sm font-semibold text-slate-600 mb-4 pb-2 border-b border-slate-100">平台信息</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs font-medium text-slate-500 mb-1 block">达人账号名称 <span class="text-red-400">*</span></label>
+              <input v-model="resource.accountName" placeholder="请输入达人账号名称" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-500 mb-1 block">运营平台 <span class="text-red-400">*</span></label>
+              <select v-model="resource.platform" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500">
+                <option value="">请选择运营平台</option>
+                <option v-for="p in platforms" :key="p" :value="p">{{ p }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-500 mb-1 block">联系方式 <span class="text-red-400">*</span></label>
+              <input v-model="resource.phone" placeholder="请输入手机号" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-500 mb-1 block">对接微信号 <span class="text-red-400">*</span></label>
+              <input v-model="resource.wechat" placeholder="请输入对接微信号" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 达人数据 -->
+        <div class="mb-6">
+          <h4 class="text-sm font-semibold text-slate-600 mb-4 pb-2 border-b border-slate-100">达人数据</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs font-medium text-slate-500 mb-1 block">粉丝数量(万) <span class="text-red-400">*</span></label>
+              <input v-model="resource.fansCount" type="number" step="0.1" placeholder="保留1位小数" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-500 mb-1 block">核心类目 <span class="text-red-400">*</span></label>
+              <select v-model="resource.category" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500">
+                <option value="">请选择核心类目</option>
+                <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="mt-4">
+            <label class="text-xs font-medium text-slate-500 mb-1 block">粉丝画像 <span class="text-red-400">*</span></label>
+            <textarea v-model="resource.fansProfile" placeholder="请描述粉丝画像特征，如：年龄层、消费能力、兴趣爱好等" rows="3" class="w-full p-3 rounded-xl border border-slate-200 text-sm outline-none resize-none focus:border-blue-500" />
+          </div>
+          <div class="mt-4">
+            <label class="text-xs font-medium text-slate-500 mb-1 block">同类目带货GMV(万/月) <span class="text-red-400">*</span></label>
+            <input v-model="resource.gmv" type="number" step="0.01" placeholder="保留2位小数，空默认0" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+          </div>
+        </div>
+
+        <!-- 跟进信息 -->
+        <div class="mb-6">
+          <h4 class="text-sm font-semibold text-slate-600 mb-4 pb-2 border-b border-slate-100">跟进信息</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs font-medium text-slate-500 mb-1 block">触达渠道 <span class="text-red-400">*</span></label>
+              <input v-model="resource.reachChannel" placeholder="请输入触达渠道" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            <div>
+              <label class="text-xs font-medium text-slate-500 mb-1 block">首次建联时间 <span class="text-red-400">*</span></label>
+              <input v-model="resource.firstContactTime" type="date" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-500 mb-1 block">最新跟进时间 <span class="text-red-400">*</span></label>
+              <input v-model="resource.lastFollowTime" type="date" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-500 mb-1 block">下次跟进时间 <span class="text-red-400">*</span></label>
+              <input v-model="resource.nextFollowTime" type="date" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 提交 -->
+        <button @click="saveResource" :disabled="!resource.name" class="px-8 py-2.5 bg-blue-600 text-white rounded-xl text-sm hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium">
+          + 达人资源录入
+        </button>
       </div>
 
-      <!-- 资源列表 -->
-      <div v-else>
-        <div class="mb-4 relative"><span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">🔍</span><input v-model="search" placeholder="搜索达人名称..." class="w-full pl-11 pr-4 h-11 rounded-xl border border-slate-200 bg-white text-sm outline-none" /></div>
+      <!-- 我的资源 / 全量资源 -->
+      <div v-if="activeTab === 'mine' || activeTab === 'all'">
+        <div class="mb-4 relative max-w-md">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+          <input v-model="search" placeholder="搜索达人姓名、排号、类目..." class="w-full pl-11 pr-4 h-11 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:border-blue-500" />
+        </div>
+        <!-- 列表 -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div v-for="r in filteredResources" :key="r.id" class="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-            <div class="flex items-start justify-between"><div><h3 class="font-medium text-slate-800">{{ r.darenName }}</h3><p class="text-sm text-slate-500">{{ r.platform }} · {{ r.category }}</p></div><button @click="deleteResource(r.id)" class="text-red-400 hover:text-red-600 text-sm">🗑</button></div>
-            <div class="flex flex-wrap gap-2 mt-3 text-xs"><span class="px-2 py-0.5 bg-slate-100 rounded">粉丝 {{ formatNum(parseFloat(r.fans)) }}</span><span class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded">{{ r.position }}</span></div>
-            <p v-if="r.contact" class="text-xs text-slate-400 mt-1">📞 {{ r.contact }}</p>
+          <div v-for="r in filteredResources" :key="r.id" class="bg-white rounded-xl p-5 shadow-sm border border-slate-100 hover:shadow-md hover:border-slate-200 transition-all">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <h3 class="font-semibold text-slate-800 flex items-center gap-2">
+                  {{ r.name }}
+                  <span class="text-xs text-slate-400 font-normal">{{ r.code }}</span>
+                </h3>
+                <p class="text-sm text-slate-500 mt-0.5">{{ r.platform }} · {{ r.category }}</p>
+              </div>
+              <button @click="deleteResource(r.id)" class="text-slate-300 hover:text-red-500 text-sm transition-colors">🗑</button>
+            </div>
+            <div class="flex flex-wrap gap-2 text-xs">
+              <span class="px-2 py-0.5 bg-slate-100 rounded text-slate-600">粉丝 {{ formatFans(r.fansCount) }}</span>
+              <span v-if="r.gmv" class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded">GMV ¥{{ r.gmv }}万</span>
+              <span class="px-2 py-0.5 bg-green-50 text-green-600 rounded">{{ r.category }}</span>
+            </div>
+            <div class="mt-3 pt-3 border-t border-slate-50 text-xs text-slate-400 space-y-1">
+              <p v-if="r.phone">📞 {{ r.phone }}</p>
+              <p v-if="r.wechat">💬 {{ r.wechat }}</p>
+              <p v-if="r.reachChannel">📡 {{ r.reachChannel }}</p>
+              <p v-if="r.nextFollowTime" class="text-amber-500">⏰ 下次跟进: {{ r.nextFollowTime }}</p>
+            </div>
           </div>
         </div>
-        <div v-if="filteredResources.length === 0 && !search" class="text-center py-16 text-slate-400"><span class="text-4xl block mb-4">🗄</span><p>暂无资源，点击上方按钮录入</p></div>
+        <div v-if="filteredResources.length === 0 && !search" class="text-center py-16 text-slate-400">
+          <span class="text-5xl block mb-4">🗄</span>
+          <p v-if="activeTab === 'mine'">暂无我的资源</p>
+          <p v-else>暂无从各资源，点击上方"资源录入"添加</p>
+        </div>
+      </div>
+
+      <!-- 数据汇总 -->
+      <div v-if="activeTab === 'summary'" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+        <h3 class="font-bold text-slate-800 text-lg mb-4">📊 数据汇总</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div class="bg-blue-50 rounded-xl p-4 text-center">
+            <p class="text-3xl font-bold text-blue-600">{{ resources.length }}</p>
+            <p class="text-sm text-blue-500 mt-1">达人总数</p>
+          </div>
+          <div class="bg-emerald-50 rounded-xl p-4 text-center">
+            <p class="text-3xl font-bold text-emerald-600">{{ platformStats.length }}</p>
+            <p class="text-sm text-emerald-500 mt-1">覆盖平台</p>
+          </div>
+          <div class="bg-purple-50 rounded-xl p-4 text-center">
+            <p class="text-3xl font-bold text-purple-600">{{ categoryStats.length }}</p>
+            <p class="text-sm text-purple-500 mt-1">覆盖类目</p>
+          </div>
+          <div class="bg-amber-50 rounded-xl p-4 text-center">
+            <p class="text-3xl font-bold text-amber-600">{{ totalFans }}</p>
+            <p class="text-sm text-amber-500 mt-1">总粉丝量(万)</p>
+          </div>
+        </div>
+        <!-- 平台分布 -->
+        <div class="mb-6">
+          <h4 class="text-sm font-semibold text-slate-600 mb-3">平台分布</h4>
+          <div class="space-y-2">
+            <div v-for="ps in platformStats" :key="ps.name" class="flex items-center gap-3">
+              <span class="w-20 text-sm text-slate-600">{{ ps.name }}</span>
+              <div class="flex-1 h-6 bg-slate-100 rounded-full overflow-hidden">
+                <div class="h-full bg-blue-500 rounded-full" :style="{ width: (ps.count / Math.max(1, resources.length) * 100) + '%' }" />
+              </div>
+              <span class="text-sm font-medium text-slate-700 w-10 text-right">{{ ps.count }}</span>
+            </div>
+          </div>
+        </div>
+        <!-- 类目分布 -->
+        <div>
+          <h4 class="text-sm font-semibold text-slate-600 mb-3">类目分布</h4>
+          <div class="space-y-2">
+            <div v-for="cs in categoryStats" :key="cs.name" class="flex items-center gap-3">
+              <span class="w-20 text-sm text-slate-600">{{ cs.name }}</span>
+              <div class="flex-1 h-6 bg-slate-100 rounded-full overflow-hidden">
+                <div class="h-full bg-emerald-500 rounded-full" :style="{ width: (cs.count / Math.max(1, resources.length) * 100) + '%' }" />
+              </div>
+              <span class="text-sm font-medium text-slate-700 w-10 text-right">{{ cs.count }}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </AppLayout>
@@ -50,26 +211,60 @@
 import { ref, computed, onMounted } from 'vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 
-const activeTab = ref('list')
+const activeTab = ref('all')
 const search = ref('')
-const platforms = ['抖音', '快手', '小红书', '视频号', '淘宝直播', '其他']
-const categories = ['美妆护肤', '服饰穿搭', '食品零食', '家居日用', '母婴用品', '3C数码', '其他']
-const positions = ['商务', '运营', '达人本人', '其他']
+const platforms = ['抖音', '快手', '小红书', '视频号', '淘宝直播', 'B站', '其他']
+const categories = ['美妆护肤', '服饰穿搭', '食品零食', '家居日用', '母婴用品', '3C数码', '个护清洁', '运动户外', '教育培训', '其他']
 
-const resource = ref({ darenName: '', platform: '', fans: '', category: '', position: '', contact: '', remark: '' })
+const tabs = [
+  { id: 'add', label: '+ 资源录入' },
+  { id: 'mine', label: '我的资源' },
+  { id: 'all', label: '全量资源' },
+  { id: 'summary', label: '数据汇总' }
+]
+
+const EMPTY_RESOURCE = {
+  name: '', date: new Date().toISOString().split('T')[0], code: '',
+  accountName: '', platform: '', phone: '', wechat: '',
+  fansCount: '', category: '', fansProfile: '', gmv: '',
+  reachChannel: '', firstContactTime: '', lastFollowTime: '', nextFollowTime: ''
+}
+
+const resource = ref({ ...EMPTY_RESOURCE })
 const resources = ref<any[]>([])
 
 const filteredResources = computed(() => {
   if (!search.value) return resources.value
-  return resources.value.filter(r => r.darenName.toLowerCase().includes(search.value.toLowerCase()))
+  return resources.value.filter(r =>
+    r.name?.toLowerCase().includes(search.value.toLowerCase()) ||
+    r.code?.toLowerCase().includes(search.value.toLowerCase()) ||
+    r.category?.toLowerCase().includes(search.value.toLowerCase()) ||
+    r.platform?.toLowerCase().includes(search.value.toLowerCase())
+  )
 })
 
-function formatNum(n: number) { if (!n) return '0'; return n >= 10000 ? (n / 10000).toFixed(1) + '万' : n.toLocaleString() }
+const platformStats = computed(() => {
+  const map: Record<string, number> = {}
+  resources.value.forEach(r => { const p = r.platform; if (p) map[p] = (map[p] || 0) + 1 })
+  return Object.entries(map).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count)
+})
+
+const categoryStats = computed(() => {
+  const map: Record<string, number> = {}
+  resources.value.forEach(r => { const c = r.category; if (c) map[c] = (map[c] || 0) + 1 })
+  return Object.entries(map).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count)
+})
+
+const totalFans = computed(() => {
+  return resources.value.reduce((sum, r) => sum + parseFloat(r.fansCount || '0'), 0).toFixed(1)
+})
+
+function formatFans(n: number) { if (!n) return '0'; return n >= 10000 ? (n / 10000).toFixed(1) + '万' : n.toLocaleString() }
 
 function saveResource() {
-  if (!resource.value.darenName) return
+  if (!resource.value.name) return
   resources.value.unshift({ ...resource.value, id: Date.now().toString() })
-  resource.value = { darenName: '', platform: '', fans: '', category: '', position: '', contact: '', remark: '' }
+  resource.value = { ...EMPTY_RESOURCE, date: new Date().toISOString().split('T')[0] }
   save()
 }
 

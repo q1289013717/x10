@@ -5,7 +5,7 @@
         <div><h1 class="page-title">达人合作台账</h1><p class="page-subtitle">管理达人合作记录与数据</p></div>
         <div class="flex gap-2">
           <router-link to="/influencer-summary" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm hover:bg-blue-700">📊 汇总统计</router-link>
-          <button @click="showForm = true" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm hover:bg-emerald-700">+ 新增记录</button>
+          <button @click="openForm()" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm hover:bg-emerald-700">+ 新增记录</button>
         </div>
       </div>
 
@@ -14,6 +14,7 @@
         <div class="flex flex-wrap gap-3">
           <input v-model="filters.influencerName" placeholder="搜索达人名称..." class="flex-1 min-w-[200px] h-10 px-4 rounded-lg border border-slate-200 bg-slate-50 text-sm outline-none" />
           <select v-model="filters.platform" class="w-32 h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 text-sm outline-none"><option value="all">全部平台</option><option v-for="p in platforms" :key="p" :value="p">{{ p }}</option></select>
+          <select v-model="filters.payStatus" class="w-32 h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 text-sm outline-none"><option value="all">全部状态</option><option value="已支付">已支付</option><option value="未支付">未支付</option><option value="部分支付">部分支付</option></select>
           <input v-model="filters.startDate" type="date" class="w-36 h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 text-sm outline-none" />
           <input v-model="filters.endDate" type="date" class="w-36 h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 text-sm outline-none" />
         </div>
@@ -23,22 +24,34 @@
       <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full">
-            <thead><tr class="border-b border-slate-100 bg-slate-50"><th class="px-4 py-3 text-left text-sm font-semibold text-slate-600">日期</th><th class="px-4 py-3 text-left text-sm font-semibold text-slate-600">达人名称</th><th class="px-4 py-3 text-left text-sm font-semibold text-slate-600">平台</th><th class="px-4 py-3 text-right text-sm font-semibold text-slate-600">粉丝数</th><th class="px-4 py-3 text-right text-sm font-semibold text-slate-600">合作金额</th><th class="px-4 py-3 text-center text-sm font-semibold text-slate-600">状态</th><th class="px-4 py-3 text-center text-sm font-semibold text-slate-600">操作</th></tr></thead>
+            <thead><tr class="border-b border-slate-100 bg-slate-50">
+              <th class="px-3 py-3 text-left text-sm font-semibold text-slate-600 whitespace-nowrap">日期</th>
+              <th class="px-3 py-3 text-left text-sm font-semibold text-slate-600 whitespace-nowrap">达人名称</th>
+              <th class="px-3 py-3 text-left text-sm font-semibold text-slate-600 whitespace-nowrap">平台</th>
+              <th class="px-3 py-3 text-right text-sm font-semibold text-slate-600 whitespace-nowrap">粉丝数</th>
+              <th class="px-3 py-3 text-right text-sm font-semibold text-slate-600 whitespace-nowrap">GMV(元)</th>
+              <th class="px-3 py-3 text-right text-sm font-semibold text-slate-600 whitespace-nowrap">ROI</th>
+              <th class="px-3 py-3 text-center text-sm font-semibold text-slate-600 whitespace-nowrap">支付状态</th>
+              <th class="px-3 py-3 text-center text-sm font-semibold text-slate-600 whitespace-nowrap">操作</th>
+            </tr></thead>
             <tbody>
               <tr v-for="r in paginatedRecords" :key="r.id" class="border-b border-slate-50 hover:bg-slate-50/50">
-                <td class="px-4 py-3 text-sm">{{ r.date }}</td>
-                <td class="px-4 py-3"><span class="font-medium text-slate-800 text-sm">{{ r.influencerName }}</span></td>
-                <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-600">{{ r.platform }}</span></td>
-                <td class="px-4 py-3 text-right text-sm">{{ formatNum(r.fansCount) }}</td>
-                <td class="px-4 py-3 text-right text-sm font-medium">¥{{ formatNum(r.amount) }}</td>
-                <td class="px-4 py-3 text-center"><span :class="['px-2 py-0.5 rounded text-xs', statusMap[r.status]?.cls || 'bg-slate-100 text-slate-600']">{{ statusMap[r.status]?.label || r.status }}</span></td>
-                <td class="px-4 py-3 text-center"><button @click="editRecord(r)" class="text-blue-600 hover:text-blue-700 text-sm mr-2">✎</button><button @click="deleteRecord(r.id)" class="text-red-500 hover:text-red-600 text-sm">🗑</button></td>
+                <td class="px-3 py-3 text-sm whitespace-nowrap">{{ r.date }}</td>
+                <td class="px-3 py-3"><span class="font-medium text-slate-800 text-sm">{{ r.influencerName }}</span></td>
+                <td class="px-3 py-3"><span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-600">{{ r.platform }}</span></td>
+                <td class="px-3 py-3 text-right text-sm">{{ formatNum(r.fansCount) }}</td>
+                <td class="px-3 py-3 text-right text-sm font-medium">¥{{ formatNum(r.gmv || 0) }}</td>
+                <td class="px-3 py-3 text-right text-sm">{{ r.roi || '-' }}</td>
+                <td class="px-3 py-3 text-center"><span :class="getPayStatusClass(r.payStatus)">{{ r.payStatus || '未支付' }}</span></td>
+                <td class="px-3 py-3 text-center">
+                  <button @click="editRecord(r)" class="text-blue-600 hover:text-blue-700 text-sm mr-2" title="编辑">✎</button>
+                  <button @click="deleteRecord(r.id)" class="text-red-500 hover:text-red-600 text-sm" title="删除">🗑</button>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
         <div v-if="filteredRecords.length === 0" class="text-center py-16 text-slate-400"><span class="text-4xl block mb-4">📊</span><p>暂无记录</p></div>
-        <!-- 分页 -->
         <div v-if="totalPages > 1" class="flex items-center justify-center gap-2 p-4 border-t border-slate-100">
           <button :disabled="page <= 1" @click="page--" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm disabled:opacity-30">←</button>
           <span class="text-sm text-slate-500">{{ page }} / {{ totalPages }}</span>
@@ -47,20 +60,159 @@
       </div>
     </div>
 
-    <!-- 新增/编辑弹窗 -->
+    <!-- 新增/编辑弹窗 — 完整版 -->
     <Teleport to="body">
       <div v-if="showForm" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" @click.self="showForm = false">
-        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[85vh] overflow-auto p-6">
-          <h3 class="font-bold text-slate-800 text-lg mb-4">{{ editingId ? '编辑记录' : '新增记录' }}</h3>
-          <div class="space-y-3">
-            <input v-model="form.date" type="date" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none" />
-            <input v-model="form.influencerName" placeholder="达人名称" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none" />
-            <select v-model="form.platform" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none"><option value="">选择平台</option><option v-for="p in platforms" :key="p" :value="p">{{ p }}</option></select>
-            <input v-model="form.fansCount" type="number" placeholder="粉丝数" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none" />
-            <input v-model="form.amount" type="number" placeholder="合作金额" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none" />
-            <select v-model="form.status" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none"><option value="洽谈中">洽谈中</option><option value="已合作">已合作</option><option value="已完成">已完成</option><option value="已取消">已取消</option></select>
+        <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-auto">
+          <!-- 弹窗头部 -->
+          <div class="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 rounded-t-2xl z-10">
+            <h3 class="font-bold text-slate-800 text-lg">{{ editingId ? '编辑达人合作记录' : '新增达人合作记录' }}</h3>
           </div>
-          <div class="flex gap-3 mt-6"><button @click="showForm = false" class="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm">取消</button><button @click="saveRecord" class="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm">保存</button></div>
+
+          <div class="p-6 space-y-6">
+            <!-- 基本信息 -->
+            <div>
+              <h4 class="text-sm font-semibold text-slate-700 mb-3 pb-2 border-b border-slate-100">📋 基本信息</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="text-xs font-medium text-slate-500 mb-1 block">日期 <span class="text-red-400">*</span></label>
+                  <input v-model="form.date" type="date" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-slate-500 mb-1 block">达人名称 <span class="text-red-400">*</span></label>
+                  <input v-model="form.influencerName" placeholder="请输入达人名称" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-slate-500 mb-1 block">达人ID <span class="text-red-400">*</span></label>
+                  <input v-model="form.influencerId" placeholder="请输入达人ID" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-slate-500 mb-1 block">对接人及联系方式</label>
+                  <input v-model="form.contactPerson" placeholder="格式：姓名-电话" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-slate-500 mb-1 block">主作平台 <span class="text-red-400">*</span></label>
+                  <div class="flex gap-2">
+                    <select v-model="form.platform" class="flex-1 h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500">
+                      <option value="">选择平台</option><option v-for="p in platforms" :key="p" :value="p">{{ p }}</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-slate-500 mb-1 block">平台UID</label>
+                  <input v-model="form.platformUid" placeholder="平台UID" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-slate-500 mb-1 block">佣金比例(%) <span class="text-red-400">*</span></label>
+                  <input v-model="form.commissionRate" type="number" step="0.01" placeholder="保留2位小数" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-slate-500 mb-1 block">投流方式 <span class="text-red-400">*</span></label>
+                  <select v-model="form.trafficType" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500">
+                    <option value="">请选择</option>
+                    <option value="千川">千川</option>
+                    <option value="随心推">随心推</option>
+                    <option value="本地推">本地推</option>
+                    <option value="自然流">自然流</option>
+                    <option value="混合">混合</option>
+                    <option value="其他">其他</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- 合作信息 -->
+            <div>
+              <h4 class="text-sm font-semibold text-slate-700 mb-3 pb-2 border-b border-slate-100">🤝 合作信息</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="text-xs font-medium text-slate-500 mb-1 block">合作开始日期 <span class="text-red-400">*</span></label>
+                  <input v-model="form.coopStartDate" type="date" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-slate-500 mb-1 block">合作结束日期 <span class="text-red-400">*</span></label>
+                  <input v-model="form.coopEndDate" type="date" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-slate-500 mb-1 block">带货合规情况 <span class="text-red-400">*</span></label>
+                  <select v-model="form.complianceStatus" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500">
+                    <option value="">请选择</option>
+                    <option value="合规">合规</option>
+                    <option value="需整改">需整改</option>
+                    <option value="不合规">不合规</option>
+                    <option value="待确认">待确认</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-slate-500 mb-1 block">支付状态 <span class="text-red-400">*</span></label>
+                  <select v-model="form.payStatus" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500">
+                    <option value="">请选择</option>
+                    <option value="已支付">已支付</option>
+                    <option value="未支付">未支付</option>
+                    <option value="部分支付">部分支付</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- 业绩数据 -->
+            <div>
+              <h4 class="text-sm font-semibold text-slate-700 mb-3 pb-2 border-b border-slate-100">📈 业绩数据</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="text-xs font-medium text-slate-500 mb-1 block">GMV(元) <span class="text-red-400">*</span></label>
+                  <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">¥</span>
+                    <input v-model="form.gmv" type="number" step="0.01" placeholder="保留2位小数" class="w-full h-10 pl-8 pr-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+                  </div>
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-slate-500 mb-1 block">ROI值</label>
+                  <input v-model="form.roi" type="number" step="0.01" placeholder="保留2位小数" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-slate-500 mb-1 block">转化率(%)</label>
+                  <input v-model="form.conversionRate" type="number" step="0.01" placeholder="保留2位小数" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-slate-500 mb-1 block">退货率(%)</label>
+                  <input v-model="form.returnRate" type="number" step="0.01" placeholder="保留2位小数" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+                </div>
+              </div>
+            </div>
+
+            <!-- 复播信息 -->
+            <div>
+              <h4 class="text-sm font-semibold text-slate-700 mb-3 pb-2 border-b border-slate-100">🔄 复播信息</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="text-xs font-medium text-slate-500 mb-1 block">复播意图 <span class="text-red-400">*</span></label>
+                  <select v-model="form.rebroadcastIntent" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500">
+                    <option value="">请选择</option>
+                    <option value="有意向">有意向</option>
+                    <option value="无意向">无意向</option>
+                    <option value="待确认">待确认</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-slate-500 mb-1 block">复播时间 <span class="text-red-400">*</span></label>
+                  <input v-model="form.rebroadcastTime" type="date" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+                </div>
+              </div>
+            </div>
+
+            <!-- 备注 -->
+            <div>
+              <h4 class="text-sm font-semibold text-slate-700 mb-3 pb-2 border-b border-slate-100">📝 备注</h4>
+              <textarea v-model="form.remark" placeholder="请输入备注信息（选填）" rows="3" class="w-full p-3 rounded-xl border border-slate-200 text-sm outline-none resize-none focus:border-blue-500" />
+            </div>
+          </div>
+
+          <!-- 底部按钮 -->
+          <div class="sticky bottom-0 bg-white border-t border-slate-100 px-6 py-4 rounded-b-2xl flex gap-3">
+            <button @click="showForm = false" class="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-600 hover:bg-slate-50 transition-colors">取消</button>
+            <button @click="saveRecord" class="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm hover:bg-blue-700 transition-colors font-medium">提交记录</button>
+          </div>
         </div>
       </div>
     </Teleport>
@@ -77,16 +229,39 @@ const page = ref(1)
 const pageSize = 10
 
 const platforms = ['抖音', '快手', '小红书', '视频号', '淘宝直播', '其他']
-const statusMap: any = { '洽谈中': { label: '洽谈中', cls: 'bg-amber-100 text-amber-700' }, '已合作': { label: '已合作', cls: 'bg-blue-100 text-blue-700' }, '已完成': { label: '已完成', cls: 'bg-emerald-100 text-emerald-700' }, '已取消': { label: '已取消', cls: 'bg-gray-100 text-gray-700' } }
 
-const filters = ref({ influencerName: '', platform: 'all', startDate: '', endDate: '' })
-const form = ref({ date: new Date().toISOString().split('T')[0], influencerName: '', platform: '', fansCount: '', amount: '', status: '洽谈中' })
+const filters = ref({ influencerName: '', platform: 'all', payStatus: 'all', startDate: '', endDate: '' })
+
+const EMPTY_FORM = {
+  date: new Date().toISOString().split('T')[0],
+  influencerName: '',
+  influencerId: '',
+  contactPerson: '',
+  platform: '',
+  platformUid: '',
+  commissionRate: '',
+  trafficType: '',
+  coopStartDate: '',
+  coopEndDate: '',
+  complianceStatus: '',
+  payStatus: '',
+  gmv: '',
+  roi: '',
+  conversionRate: '',
+  returnRate: '',
+  rebroadcastIntent: '',
+  rebroadcastTime: '',
+  remark: ''
+}
+
+const form = ref({ ...EMPTY_FORM })
 const records = ref<any[]>([])
 
 const filteredRecords = computed(() => {
   return records.value.filter(r => {
     if (filters.value.influencerName && !r.influencerName.toLowerCase().includes(filters.value.influencerName.toLowerCase())) return false
     if (filters.value.platform !== 'all' && r.platform !== filters.value.platform) return false
+    if (filters.value.payStatus !== 'all' && r.payStatus !== filters.value.payStatus) return false
     if (filters.value.startDate && r.date < filters.value.startDate) return false
     if (filters.value.endDate && r.date > filters.value.endDate) return false
     return true
@@ -98,14 +273,28 @@ const paginatedRecords = computed(() => filteredRecords.value.slice((page.value 
 
 function formatNum(n: number) { if (!n) return '0'; return n >= 10000 ? (n / 10000).toFixed(1) + '万' : n.toLocaleString() }
 
+function getPayStatusClass(status: string) {
+  const map: any = {
+    '已支付': 'px-2 py-0.5 rounded text-xs bg-emerald-100 text-emerald-700',
+    '未支付': 'px-2 py-0.5 rounded text-xs bg-amber-100 text-amber-700',
+    '部分支付': 'px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-700'
+  }
+  return map[status] || 'px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-600'
+}
+
+function openForm() { form.value = { ...EMPTY_FORM }; editingId.value = null; showForm.value = true }
 function editRecord(r: any) { form.value = { ...r }; editingId.value = r.id; showForm.value = true }
 
 function saveRecord() {
   if (!form.value.influencerName) return
-  if (editingId.value) { const i = records.value.findIndex(r => r.id === editingId.value); if (i >= 0) records.value[i] = { ...form.value, id: editingId.value } }
-  else { records.value.unshift({ ...form.value, id: Date.now().toString() }) }
+  const payload = { ...form.value }
+  if (editingId.value) {
+    const i = records.value.findIndex(r => r.id === editingId.value)
+    if (i >= 0) records.value[i] = { ...payload, id: editingId.value }
+  } else {
+    records.value.unshift({ ...payload, id: Date.now().toString() })
+  }
   save(); showForm.value = false; editingId.value = null
-  form.value = { date: new Date().toISOString().split('T')[0], influencerName: '', platform: '', fansCount: '', amount: '', status: '洽谈中' }
 }
 
 function deleteRecord(id: string) { if (!confirm('确定删除？')) return; records.value = records.value.filter(r => r.id !== id); save() }
