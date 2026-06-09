@@ -23,6 +23,9 @@
           <button @click="activeTab = 'problems'" :class="['px-6 py-2.5 rounded-lg text-sm font-medium transition-all', activeTab === 'problems' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700']">
             <span class="mr-1">💡</span>难题库
           </button>
+          <button @click="goToQuiz" class="px-6 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-500 hover:text-slate-700">
+            <span class="mr-1">📝</span>刷题中心
+          </button>
         </div>
       </div>
 
@@ -249,9 +252,12 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/api'
+
+const router = useRouter()
 
 const authStore = useAuthStore()
 const currentUser = computed(() => authStore.user)
@@ -259,6 +265,10 @@ const isAdmin = computed(() => authStore.isAdmin)
 
 const activeTab = ref('bd-manual')
 const isEditing = ref(false)
+
+function goToQuiz() {
+  router.push({ name: 'training-quiz' })
+}
 
 // ========== BD自查手册数据 ==========
 

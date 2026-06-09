@@ -206,7 +206,8 @@ const menuItems = [
   { id: 'influencer-list', label: '达人合作台账', emoji: '📊', description: '管理达人合作记录' },
   { id: 'darensource', label: '达人资源库', emoji: '🗄', description: '资源录入/查询/统计' },
   { id: 'consensus-archive', label: '共识档案', emoji: '📖', description: '会议纪要与共识管理' },
-  { id: 'training', label: 'X10成长中心', emoji: '🎓', description: '知识库与刷题' },
+  { id: 'training', label: 'X10成长中心', emoji: '🎓', description: '知识库与BD自查手册' },
+  { id: 'training-quiz', label: '刷题中心', emoji: '📝', description: '巩固知识·提升能力' },
   { id: 'settings', label: '设置', emoji: '⚙', description: '系统设置' }
 ]
 
