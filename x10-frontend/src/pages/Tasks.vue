@@ -193,6 +193,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import AppLayout from '@/layouts/AppLayout.vue'
 import api from '@/api'
 
 const router = useRouter()

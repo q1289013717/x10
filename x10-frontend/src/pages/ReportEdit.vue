@@ -101,6 +101,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import AppLayout from '@/layouts/AppLayout.vue'
 import api from '@/api'
 import { useAuthStore } from '@/stores/auth'
 
