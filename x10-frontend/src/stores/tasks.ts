@@ -59,7 +59,8 @@ export const useTaskStore = defineStore('tasks', () => {
 
   async function saveTask(date: string, dayData: DayData) {
     try {
-      const res = await api.post('/tasks', { date, ...dayData })
+      const { date: _d, ...rest } = dayData as any
+      const res = await api.post('/tasks', { date, ...rest })
       tasks.value = { ...tasks.value, [date]: res.data }
       return res.data
     } catch (e) {

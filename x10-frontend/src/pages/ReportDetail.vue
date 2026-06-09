@@ -49,7 +49,7 @@
             <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2"><span class="text-emerald-600">✅</span> 工作内容</h3>
             <div class="space-y-3">
               <div v-for="(item, idx) in report.workItems" :key="item.id || idx" class="flex items-start gap-4 p-4 bg-slate-50 rounded-xl">
-                <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm flex-shrink-0">{{ idx + 1 }}</div>
+                <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm flex-shrink-0">{{ Number(idx) + 1 }}</div>
                 <div class="flex-1">
                   <div class="flex items-center gap-2 mb-1"><span class="text-xs bg-slate-200 rounded px-1.5 py-0.5">{{ item.type || '其他' }}</span><span class="text-xs text-slate-500">⏰ {{ item.duration }}小时</span></div>
                   <p class="text-slate-700">{{ item.content }}</p>

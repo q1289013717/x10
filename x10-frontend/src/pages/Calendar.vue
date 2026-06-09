@@ -325,7 +325,7 @@
                   <div class="space-y-4">
                     <div v-for="(task, idx) in dayViewData.tasks" :key="task.id" class="bg-slate-50/70 rounded-2xl p-5 flex items-start gap-4 border border-slate-100">
                       <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center font-bold text-lg flex-shrink-0 shadow-lg shadow-blue-500/30">
-                        {{ idx + 1 }}
+                        {{ Number(idx) + 1 }}
                       </div>
                       <div class="flex-1 min-w-0">
                         <div class="flex items-start justify-between gap-4">

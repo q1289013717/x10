@@ -160,7 +160,7 @@ const props = defineProps<{
   currentPage: string
 }>()
 
-const emit = defineEmits<{ navigate?: [pageId: string] }>()
+const emit = defineEmits<{ navigate: [pageId: string] }>()
 
 const router = useRouter()
 const authStore = useAuthStore()

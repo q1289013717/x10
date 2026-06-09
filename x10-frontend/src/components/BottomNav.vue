@@ -28,7 +28,7 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 defineProps<{ currentPage: string }>()
-const emit = defineEmits<{ navigate?: [pageId: string] }>()
+const emit = defineEmits<{ navigate: [pageId: string] }>()
 
 function handleNavigate(pageId: string) {
   emit('navigate', pageId)

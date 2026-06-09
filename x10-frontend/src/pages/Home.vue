@@ -372,7 +372,8 @@ onMounted(async () => {
       d.setDate(d.getDate() - i)
       const dk = d.toISOString().split('T')[0]
       if (taskStore.tasks[dk]) {
-        recents.push({ date: dk, ...taskStore.tasks[dk] })
+        const dayInfo = taskStore.tasks[dk] as any
+        recents.push({ date: dk, ...dayInfo })
       }
     }
     recentTasks.value = recents
