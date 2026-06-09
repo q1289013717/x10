@@ -21,7 +21,7 @@
           <div v-for="(section, idx) in editDoc.sections" :key="idx" class="p-4 bg-blue-50/50 rounded-xl border border-blue-100">
             <div class="flex items-center gap-2 mb-2">
               <input v-model="section.title" class="font-semibold text-slate-800 bg-transparent border-b border-blue-200 outline-none flex-1" placeholder="章节标题" />
-              <button @click="removeSection(idx)" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-100 text-slate-400 hover:text-red-500 text-sm" title="删除章节">✕</button>
+              <button @click="removeSection(idx as number)" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-100 text-slate-400 hover:text-red-500 text-sm" title="删除章节">✕</button>
             </div>
             <input v-model="section.hint" class="text-sm text-slate-500 italic w-full bg-transparent border-b border-slate-200 outline-none mb-2" placeholder="提示语" />
             <textarea v-model="section.content" :placeholder="section.placeholder" rows="4" class="w-full p-3 rounded-xl border border-blue-200 outline-none resize-none text-sm focus:border-blue-500" />
