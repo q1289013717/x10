@@ -1,6 +1,19 @@
+from pydantic import BeforeValidator
 from pydantic_settings import BaseSettings
-from typing import Optional
+from typing import Annotated, Optional, Any
+import json
 
+def _parse_cors(v: Any) -> list[str]:
+    if isinstance(v, str):
+        # 支持 "*" 或直接逗号分隔的域名字符串
+        if v.strip() == "*":
+            return ["*"]
+        try:
+            return json.loads(v)
+        except (json.JSONDecodeError, TypeError):
+            # 逗号分隔：https://a.com,https://b.com
+            return [s.strip() for s in v.split(",") if s.strip()]
+    return v
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "X10增长引擎 API"
@@ -18,8 +31,15 @@ class Settings(BaseSettings):
     def is_postgres(self) -> bool:
         return self.DATABASE_URL.startswith("postgresql")
 
-    # CORS
-    CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176"]
+    # CORS：支持环境变量传 "*" 或 JSON 数组
+    CORS_ORIGINS: Annotated[list[str], BeforeValidator(_parse_cors)] = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://localhost:5175",
+        "http://localhost:5176",
+    ]
 
     class Config:
         env_file = ".env"
