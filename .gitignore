@@ -1,0 +1,38 @@
+# --- 项目本身：排除旧版本和工具脚本 ---
+X10_V2/
+X10增长引擎_正式版/
+X10增长引擎_正式版.zip
+ai-builder (2)/
+ai-builder (2).zip
+nul
+export_localstorage.js
+migrate_data.py
+
+# --- WorkBuddy 本地数据 ---
+.workbuddy/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.env
+*.env.local
+x10-backend/.venv/
+x10-backend/venv/
+
+# --- Node ---
+node_modules/
+x10-frontend/node_modules/
+x10-frontend/dist/
+x10-frontend/.env.local
+
+# --- IDE ---
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# --- OS ---
+Thumbs.db
+desktop.ini

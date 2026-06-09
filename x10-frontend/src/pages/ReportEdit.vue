@@ -1,0 +1,211 @@
+<template>
+  <div class="min-h-screen bg-slate-50">
+    <header class="bg-white shadow-sm border-b border-slate-200 px-4 py-3 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-6xl mx-auto">
+        <div class="flex items-center gap-3">
+          <button @click="$router.back()" class="p-2 hover:bg-slate-100 rounded-lg"><span class="text-slate-600">←</span></button>
+          <div><h1 class="font-bold text-slate-800 text-lg">{{ editId ? '编辑报告' : '填写报告' }}</h1><p class="text-xs text-slate-500 flex items-center gap-1">🏢 {{ currentUser }}</p></div>
+        </div>
+        <button @click="handleSubmit" :disabled="loading" class="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2.5 text-sm font-medium disabled:opacity-50">
+          <template v-if="loading"><span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block mr-2" />保存中...</template>
+          <template v-else>💾 {{ editId ? '更新' : '提交' }}</template>
+        </button>
+      </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto p-4 lg:p-6 pb-24">
+      <div class="space-y-6">
+        <!-- 报告类型 -->
+        <div v-if="!editId" class="bg-white rounded-xl shadow-sm p-4">
+          <label class="text-sm font-medium text-slate-700 mb-3 block">报告类型</label>
+          <div class="grid grid-cols-3 gap-3">
+            <button v-for="t in typeList" :key="t.value" @click="reportType = t.value" :class="['flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all', reportType === t.value ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300']">
+              <div :class="['w-10 h-10 rounded-lg flex items-center justify-center', t.color]"><span>{{ t.icon }}</span></div>
+              <span :class="['font-medium', reportType === t.value ? 'text-blue-700' : 'text-slate-600']">{{ t.label }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 基本信息 -->
+        <div class="bg-white rounded-xl shadow-sm p-4 space-y-4">
+          <div class="flex items-center gap-2 mb-2"><span class="text-blue-600">📄</span><h2 class="font-bold text-slate-800">{{ typeLabel }}信息</h2><span class="px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-700">{{ getPeriodLabel() }}</span></div>
+          <div>
+            <label class="text-sm font-medium text-slate-700 mb-2 block">报告标题 <span class="text-red-500">*</span></label>
+            <input v-model="title" :placeholder="`请输入${typeLabel}标题`" class="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 outline-none text-sm" />
+          </div>
+          <div>
+            <label class="text-sm font-medium text-slate-700 mb-2 block">报告日期</label>
+            <input v-model="date" type="date" class="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 outline-none text-sm" />
+          </div>
+        </div>
+
+        <!-- 工作内容 -->
+        <div class="bg-white rounded-xl shadow-sm p-4">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2"><span class="text-emerald-600">✅</span><h2 class="font-bold text-slate-800">工作内容</h2></div>
+            <button @click="addWorkItem" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm hover:bg-slate-50">+ 添加工作项</button>
+          </div>
+          <div class="space-y-3">
+            <div v-for="(item, idx) in workItems" :key="item.id" class="p-4 bg-slate-50 rounded-xl space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-slate-600">工作项 {{ idx + 1 }}</span>
+                <button v-if="workItems.length > 1" @click="removeWorkItem(item.id)" class="text-red-500 text-sm hover:text-red-600">删除</button>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <select v-model="item.type" class="h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm outline-none">
+                  <option value="">工作类型</option>
+                  <option v-for="w in workTypes" :key="w.value" :value="w.value">{{ w.label }}</option>
+                </select>
+                <input v-model="item.duration" type="number" step="0.5" placeholder="工作时长（小时）" class="h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm outline-none" />
+                <input v-model="item.content" placeholder="工作内容描述" class="h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm outline-none md:col-span-3" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 数据指标 -->
+        <div class="bg-white rounded-xl shadow-sm p-4">
+          <div class="flex items-center gap-2 mb-4"><span class="text-purple-600">🎯</span><h2 class="font-bold text-slate-800">业绩数据</h2></div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div><label class="text-sm font-medium text-slate-700 mb-2 block">目标金额（万元）</label><input v-model="targetAmount" type="number" placeholder="0.00" class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 text-sm outline-none" /></div>
+            <div><label class="text-sm font-medium text-slate-700 mb-2 block">完成金额（万元）</label><input v-model="completedAmount" type="number" placeholder="0.00" class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 text-sm outline-none" /></div>
+            <div><label class="text-sm font-medium text-slate-700 mb-2 block">客户总数</label><input v-model="customerCount" type="number" placeholder="0" class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 text-sm outline-none" /></div>
+            <div><label class="text-sm font-medium text-slate-700 mb-2 block">新增客户数</label><input v-model="newCustomerCount" type="number" placeholder="0" class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 text-sm outline-none" /></div>
+          </div>
+        </div>
+
+        <!-- 总结与计划 -->
+        <div class="bg-white rounded-xl shadow-sm p-4 space-y-4">
+          <div class="flex items-center gap-2 mb-2"><span class="text-amber-600">📄</span><h2 class="font-bold text-slate-800">总结与计划</h2></div>
+          <div>
+            <label class="text-sm font-medium text-slate-700 mb-2 block flex items-center justify-between">
+              <span>工作总结 <span class="text-red-500">*</span></span>
+              <span :class="['text-xs px-2 py-0.5 rounded-full', summaryLen >= 50 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600']">
+                {{ summaryLen }} / 50字
+              </span>
+            </label>
+            <textarea v-model="summary" :placeholder="`请总结本${typeLabel.replace('报', '期')}的主要工作内容（至少50字）`" rows="4" :class="['w-full p-3 rounded-xl border resize-none outline-none text-sm', summaryLen > 0 && summaryLen < 50 ? 'border-red-300 bg-red-50' : 'border-slate-200 bg-slate-50']" /></div>
+          <div><label class="text-sm font-medium text-slate-700 mb-2 block">主要成果</label><textarea v-model="achievements" placeholder="请描述取得的主要成绩和亮点" rows="3" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 resize-none outline-none text-sm" /></div>
+          <div><label class="text-sm font-medium text-slate-700 mb-2 block">存在问题</label><textarea v-model="problems" placeholder="请描述遇到的问题和困难" rows="3" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 resize-none outline-none text-sm" /></div>
+          <div><label class="text-sm font-medium text-slate-700 mb-2 block">下阶段计划</label><textarea v-model="plans" :placeholder="`请描述下${typeLabel.replace('报', '期')}的工作计划`" rows="3" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 resize-none outline-none text-sm" /></div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="flex gap-4">
+          <button @click="$router.back()" class="flex-1 h-12 border border-slate-200 rounded-xl hover:bg-slate-50 text-sm">取消</button>
+          <button @click="handleSubmit" :disabled="loading" class="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium disabled:opacity-50">💾 保存报告</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import api from '@/api'
+import { useAuthStore } from '@/stores/auth'
+
+const router = useRouter()
+const route = useRoute()
+const authStore = useAuthStore()
+
+const editId = ref(route.query.id as string || null)
+const reportType = ref((route.query.type as string) || 'daily')
+const loading = ref(false)
+const title = ref('')
+const date = ref(new Date().toISOString().split('T')[0])
+const summary = ref('')
+const achievements = ref('')
+const problems = ref('')
+const plans = ref('')
+const targetAmount = ref('')
+const completedAmount = ref('')
+const customerCount = ref('')
+const newCustomerCount = ref('')
+
+const workItems = ref([{ id: 1, type: '', content: '', duration: '' }])
+const workTypes = ref([
+  { value: 'sales', label: '销售拜访' },
+  { value: 'meeting', label: '会议' },
+  { value: 'customer', label: '客户维护' },
+  { value: 'document', label: '文档处理' },
+  { value: 'training', label: '培训学习' },
+  { value: 'other', label: '其他' }
+])
+
+const typeList = [
+  { value: 'daily', label: '日报', icon: '📅', color: 'bg-blue-100 text-blue-700' },
+  { value: 'weekly', label: '周报', icon: '📊', color: 'bg-emerald-100 text-emerald-700' },
+  { value: 'monthly', label: '月报', icon: '📈', color: 'bg-purple-100 text-purple-700' }
+]
+
+const typeLabel = computed(() => typeList.find(t => t.value === reportType.value)?.label || '日报')
+const currentUser = computed(() => authStore.user?.name || '未知用户')
+const summaryLen = computed(() => summary.value.replace(/\s/g, '').length)
+
+function getPeriodLabel() {
+  const d = new Date(date.value)
+  if (reportType.value === 'weekly') return `${date.value} 本周`
+  if (reportType.value === 'monthly') return `${d.getFullYear()}年${d.getMonth() + 1}月`
+  return date.value
+}
+
+function addWorkItem() { workItems.value.push({ id: Date.now(), type: '', content: '', duration: '' }) }
+function removeWorkItem(id: number) { if (workItems.value.length > 1) workItems.value = workItems.value.filter(i => i.id !== id) }
+
+async function handleSubmit() {
+  if (!title.value.trim()) { alert('请填写报告标题'); return }
+  if (summaryLen.value < 50) { alert(`工作总结至少需要50字，当前仅${summaryLen.value}字`); return }
+  const validItems = workItems.value.filter(i => i.content.trim())
+  if (validItems.length === 0) { alert('请至少添加一项工作内容'); return }
+
+  loading.value = true
+  try {
+    const data = {
+      type: reportType.value,
+      title: title.value,
+      date: date.value,
+      period: getPeriodLabel(),
+      summary: summary.value,
+      achievements: achievements.value,
+      problems: problems.value,
+      plans: plans.value,
+      work_items: JSON.stringify(validItems),
+      target_amount: targetAmount.value || '0',
+      completed_amount: completedAmount.value || '0',
+      customer_count: customerCount.value || '0',
+      new_customer_count: newCustomerCount.value || '0',
+      department: '销售部',
+      status: 'submitted',
+      approval_status: 'pending',
+    }
+
+    if (editId.value) {
+      await api.put(`/reports/${editId.value}`, data)
+    } else {
+      await api.post('/reports', data)
+    }
+    router.back()
+  } catch (e: any) {
+    alert(e.response?.data?.detail || '保存失败')
+  } finally { loading.value = false }
+}
+
+onMounted(async () => {
+  if (editId.value) {
+    try {
+      const res = await api.get(`/reports/${editId.value}`)
+      if (res.data) {
+        const r = res.data
+        title.value = r.title; date.value = r.date; summary.value = r.summary || ''
+        achievements.value = r.achievements || ''; problems.value = r.problems || ''; plans.value = r.plans || ''
+        targetAmount.value = r.data?.targetAmount || ''; completedAmount.value = r.data?.completedAmount || ''
+        customerCount.value = r.data?.customerCount || ''; newCustomerCount.value = r.data?.newCustomerCount || ''
+        if (r.workItems) workItems.value = r.workItems
+        reportType.value = r.type
+      }
+    } catch (e) { console.error('加载报告失败:', e) }
+  }
+})
+</script>
