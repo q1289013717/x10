@@ -10,15 +10,6 @@ from app.models import *  # noqa: 确保所有模型被导入
 from app.api import auth, tasks, reports, training, daren, influencers, meetings, admin
 
 
-def get_cors_origins() -> list[str]:
-    """动态获取 CORS 允许列表"""
-    # 优先从环境变量读取（生产环境部署时设置）
-    env_origins = os.getenv("CORS_ORIGINS", "")
-    if env_origins:
-        return [o.strip() for o in env_origins.split(",") if o.strip()]
-    return settings.CORS_ORIGINS
-
-
 def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.PROJECT_NAME,
@@ -29,7 +20,7 @@ def create_app() -> FastAPI:
     # CORS
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=get_cors_origins(),
+        allow_origins=settings.cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
