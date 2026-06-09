@@ -60,14 +60,12 @@ const router = createRouter({
     {
       path: '/training',
       name: 'training',
-      component: () => import('@/pages/Training.vue'),
+      component: () => import('@/pages/TrainingDetail.vue'),
       meta: { requiresAuth: true },
     },
     {
       path: '/training-detail/:id',
-      name: 'training-detail',
-      component: () => import('@/pages/TrainingDetail.vue'),
-      meta: { requiresAuth: true },
+      redirect: '/training',
     },
     {
       path: '/training-quiz',
