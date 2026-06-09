@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import os
 
 from app.core.config import settings
@@ -61,6 +63,26 @@ def create_app() -> FastAPI:
     @app.get("/api/health")
     def health_check():
         return {"status": "ok"}
+
+    # =====================================================
+    # 前端静态文件（生产环境：Docker 多阶段构建产出）
+    # 注意：StaticFiles 必须在所有 API 路由之后注册
+    # =====================================================
+    STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
+    if os.path.isdir(STATIC_DIR):
+        # 挂载 /assets 目录（Vite 打包的 JS/CSS/图片）
+        assets_dir = os.path.join(STATIC_DIR, "assets")
+        if os.path.isdir(assets_dir):
+            app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+        # SPA 回退：所有非 API 路径返回 index.html
+        index_path = os.path.join(STATIC_DIR, "index.html")
+        if os.path.isfile(index_path):
+
+            @app.get("/{full_path:path}")
+            async def serve_spa(full_path: str):
+                # 只对非 API 路径做 SPA 回退
+                return FileResponse(index_path)
 
     return app
 

@@ -1,19 +1,17 @@
-from pydantic import BeforeValidator
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
-from typing import Annotated, Optional, Any
+from typing import Any
 import json
 
-def _parse_cors(v: Any) -> list[str]:
-    if isinstance(v, str):
-        # 支持 "*" 或直接逗号分隔的域名字符串
-        if v.strip() == "*":
-            return ["*"]
-        try:
-            return json.loads(v)
-        except (json.JSONDecodeError, TypeError):
-            # 逗号分隔：https://a.com,https://b.com
-            return [s.strip() for s in v.split(",") if s.strip()]
-    return v
+CORS_DEFAULT = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://localhost:5175",
+    "http://localhost:5176",
+]
+
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "X10增长引擎 API"
@@ -22,24 +20,33 @@ class Settings(BaseSettings):
 
     SECRET_KEY: str = "x10-engine-secret-key-change-in-production"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440  # 24 hours
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
 
     DATABASE_URL: str = "sqlite:///./x10.db"
 
-    # 是否使用 PostgreSQL（生产环境自动检测）
+    # CORS：环境变量可以是 "*"、JSON数组字符串、或逗号分隔字符串
+    CORS_ORIGINS: list[str] = CORS_DEFAULT
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def parse_cors(cls, v: Any) -> list[str]:
+        if isinstance(v, str):
+            s = v.strip()
+            if s == "*":
+                return ["*"]
+            try:
+                parsed = json.loads(s)
+                if isinstance(parsed, list):
+                    return parsed
+            except (json.JSONDecodeError, TypeError):
+                pass
+            # 逗号分隔
+            return [x.strip() for x in s.split(",") if x.strip()]
+        return v
+
     @property
     def is_postgres(self) -> bool:
         return self.DATABASE_URL.startswith("postgresql")
-
-    # CORS：支持环境变量传 "*" 或 JSON 数组
-    CORS_ORIGINS: Annotated[list[str], BeforeValidator(_parse_cors)] = [
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:5173",
-        "http://localhost:5174",
-        "http://localhost:5175",
-        "http://localhost:5176",
-    ]
 
     class Config:
         env_file = ".env"
