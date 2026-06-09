@@ -147,7 +147,12 @@ async function handleLogin() {
   loginError.value = ''
   try {
     await authStore.login(form.account, form.password)
-    router.push('/calendar')
+    // 管理员登录进首页（看告警面板），普通员工进日历
+    if (authStore.isAdmin) {
+      router.push('/')
+    } else {
+      router.push('/calendar')
+    }
   } catch (e: any) {
     loginError.value = e.message || '登录失败'
   } finally {

@@ -132,8 +132,19 @@
       </div>
 
       <!-- 管理员告警面板 -->
-      <div v-if="isAdmin && alerts" class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-        <div class="space-y-3">
+      <div v-if="isAdmin" class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        <!-- API 加载失败 -->
+        <div v-if="alertsError" class="bg-red-50 border border-red-200 rounded-xl p-4">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-lg">❌</span>
+            <h3 class="font-bold text-red-800">告警数据加载失败</h3>
+          </div>
+          <p class="text-sm text-red-600">{{ alertsError }}</p>
+          <button @click="loadAlerts" class="mt-2 px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-sm hover:bg-red-200 transition-colors">重新加载</button>
+        </div>
+
+        <!-- 正常告警区域 -->
+        <div v-else-if="alerts" class="space-y-3">
           <!-- 日报未提交告警 -->
           <div v-if="alerts.daily_missing?.length" class="bg-orange-50 border border-orange-200 rounded-xl p-4">
             <div class="flex items-center gap-2 mb-2">
@@ -188,6 +199,23 @@
                 </div>
               </div>
             </div>
+          </div>
+
+          <!-- 一切正常 -->
+          <div v-if="!alerts.daily_missing?.length && !alerts.weekly_missing?.length && !alerts.task_quota_alert?.length" class="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">✅</span>
+              <h3 class="font-bold text-emerald-800">一切正常</h3>
+              <span class="text-sm text-emerald-600 ml-2">昨日日报全员提交、本周周报全员提交、今日任务配额全部达标</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 加载中 -->
+        <div v-else class="bg-slate-50 border border-slate-200 rounded-xl p-4 animate-pulse">
+          <div class="flex items-center gap-2">
+            <div class="w-5 h-5 bg-slate-200 rounded-full" />
+            <div class="h-4 bg-slate-200 rounded w-32" />
           </div>
         </div>
       </div>
@@ -310,6 +338,19 @@ const isAdmin = computed(() => {
 })
 
 const alerts = ref<any>(null)
+const alertsError = ref('')
+
+async function loadAlerts() {
+  alertsError.value = ''
+  alerts.value = null
+  try {
+    const res = await api.get('/admin/alerts')
+    alerts.value = res.data
+  } catch (e: any) {
+    const msg = e.response?.data?.detail || e.message || '无法连接服务器'
+    alertsError.value = msg
+  }
+}
 
 const stats = ref({
   todayTarget: 50000,
@@ -384,12 +425,7 @@ onMounted(async () => {
 
   // 加载管理员告警
   if (isAdmin.value) {
-    try {
-      const res = await api.get('/admin/alerts')
-      alerts.value = res.data
-    } catch (e) {
-      console.error('加载告警数据失败:', e)
-    }
+    await loadAlerts()
   }
 })
 </script>

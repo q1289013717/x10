@@ -54,7 +54,7 @@ def get_doc(doc_id: str, db: Session = Depends(get_db),
 @router.post("/docs", response_model=TrainingDocResponse)
 def create_doc(doc_data: TrainingDocCreate,
                db: Session = Depends(get_db),
-               current_user: User = Depends(get_current_user)):
+               current_user: User = Depends(get_current_admin_user)):
     doc = training_crud.create_training_doc(
         db,
         title=doc_data.title,
@@ -71,7 +71,7 @@ def create_doc(doc_data: TrainingDocCreate,
 @router.put("/docs/{doc_id}", response_model=TrainingDocResponse)
 def update_doc(doc_id: str, doc_data: TrainingDocUpdate,
                db: Session = Depends(get_db),
-               current_user: User = Depends(get_current_user)):
+               current_user: User = Depends(get_current_admin_user)):
     update_data = doc_data.model_dump(exclude_unset=True)
     doc = training_crud.update_training_doc(db, doc_id, **update_data)
     if not doc:

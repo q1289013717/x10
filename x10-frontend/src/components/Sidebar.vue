@@ -58,6 +58,11 @@
           </p>
         </div>
 
+        <!-- 首页告警角标 -->
+        <span v-if="item.id === 'home' && alertCount > 0" class="min-w-[20px] h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1.5 animate-pulse">
+          {{ alertCount }}
+        </span>
+
         <div :class="['transition-all duration-200', currentPage === item.id ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2 group-hover:opacity-50 group-hover:translate-x-0']">
           <span class="text-sm">›</span>
         </div>
@@ -152,9 +157,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import api from '@/api'
 
 const props = defineProps<{
   currentPage: string
@@ -172,6 +178,20 @@ function handleNavigate(pageId: string) {
 
 const currentUser = computed(() => authStore.user)
 const isAdmin = computed(() => authStore.isAdmin)
+
+const alertCount = ref(0)
+let alertTimer: ReturnType<typeof setInterval> | null = null
+
+async function fetchAlertCount() {
+  if (!isAdmin.value) return
+  try {
+    const res = await api.get('/admin/alerts')
+    const data = res.data
+    alertCount.value = (data.daily_missing?.length || 0) + (data.weekly_missing?.length || 0) + (data.task_quota_alert?.length || 0)
+  } catch {
+    // 静默失败，不影响主界面
+  }
+}
 
 const motivation = ref('每天进步一点点，终将成就非凡')
 const isEditing = ref(false)
@@ -216,5 +236,14 @@ function handleLogout() {
 onMounted(() => {
   const saved = localStorage.getItem('motivation_quote')
   if (saved) motivation.value = saved
+  fetchAlertCount()
+  alertTimer = setInterval(fetchAlertCount, 60000) // 每分钟刷新
+})
+
+onUnmounted(() => {
+  if (alertTimer) {
+    clearInterval(alertTimer)
+    alertTimer = null
+  }
 })
 </script>

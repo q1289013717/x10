@@ -11,6 +11,10 @@
       >
         <div class="relative p-1.5 rounded-xl transition-all duration-200" :class="{ 'bg-blue-100': currentPage === item.id }">
           <component :is="item.icon" class="w-5 h-5 transition-all duration-200" :class="currentPage === item.id ? 'stroke-[2.5px]' : 'stroke-2'" />
+          <!-- 首页告警角标 -->
+          <span v-if="item.id === 'home' && alertCount > 0" class="absolute -top-1 -right-1 min-w-[16px] h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+            {{ alertCount }}
+          </span>
           <span v-if="currentPage === item.id" class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full" />
         </div>
         <span class="text-[11px] font-medium transition-all duration-200" :class="currentPage === item.id ? 'text-blue-600' : 'text-slate-400'">
@@ -22,8 +26,11 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue'
 import { h } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import api from '@/api'
 
 const router = useRouter()
 
@@ -51,4 +58,32 @@ const navItems = [
   { id: 'darensource', label: '资源库', icon: DatabaseIcon },
   { id: 'training', label: '培训', icon: GraduationIcon },
 ]
+
+const authStore = useAuthStore()
+const isAdmin = authStore.isAdmin
+const alertCount = ref(0)
+let alertTimer: ReturnType<typeof setInterval> | null = null
+
+async function fetchAlertCount() {
+  if (!isAdmin) return
+  try {
+    const res = await api.get('/admin/alerts')
+    const data = res.data
+    alertCount.value = (data.daily_missing?.length || 0) + (data.weekly_missing?.length || 0) + (data.task_quota_alert?.length || 0)
+  } catch {
+    // 静默
+  }
+}
+
+onMounted(() => {
+  fetchAlertCount()
+  alertTimer = setInterval(fetchAlertCount, 60000)
+})
+
+onUnmounted(() => {
+  if (alertTimer) {
+    clearInterval(alertTimer)
+    alertTimer = null
+  }
+})
 </script>
