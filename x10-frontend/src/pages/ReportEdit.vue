@@ -11,7 +11,7 @@
       </button>
     </template>
 
-    <main class="max-w-6xl mx-auto p-4 lg:p-6 pb-24">
+    <main class="max-w-4xl mx-auto p-4 lg:p-6 pb-24">
       <div class="space-y-6">
         <!-- 报告类型 -->
         <div v-if="!editId" class="bg-white rounded-xl shadow-sm p-4">
