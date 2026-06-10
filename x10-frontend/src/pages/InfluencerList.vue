@@ -34,7 +34,7 @@
               <tr v-for="r in paginatedRecords" :key="r.id" class="border-b border-slate-50 hover:bg-slate-50/50">
                 <td class="px-3 py-3 text-sm whitespace-nowrap">{{ r.date }}</td>
                 <td class="px-3 py-3"><span class="font-medium text-slate-800 text-sm">{{ r.influencerName }}</span></td>
-                <td class="px-3 py-3"><span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-600">{{ r.platform }}</span></td>
+                <td class="px-3 py-3"><span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-600">{{ r.platform === '其他' && r.platformOther ? r.platformOther : r.platform }}</span></td>
                 <td class="px-3 py-3 text-right text-sm">{{ formatNum(r.fansCount) }}</td>
                 <td class="px-3 py-3 text-right text-sm font-medium">¥{{ formatNum(r.gmv || 0) }}</td>
                 <td class="px-3 py-3 text-right text-sm">{{ r.roi || '-' }}</td>
@@ -93,6 +93,7 @@
                       <option value="">选择平台</option><option v-for="p in platforms" :key="p" :value="p">{{ p }}</option>
                     </select>
                   </div>
+                  <input v-if="form.platform === '其他'" v-model="form.platformOther" placeholder="请填写具体平台..." class="w-full h-10 px-3 mt-2 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
                 </div>
                 <div>
                   <label class="text-xs font-medium text-slate-500 mb-1 block">平台UID</label>
@@ -113,6 +114,7 @@
                     <option value="混合">混合</option>
                     <option value="其他">其他</option>
                   </select>
+                  <input v-if="form.trafficType === '其他'" v-model="form.trafficTypeOther" placeholder="请填写具体投流方式..." class="w-full h-10 px-3 mt-2 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
                 </div>
               </div>
             </div>
@@ -234,9 +236,11 @@ const EMPTY_FORM = {
   influencerId: '',
   contactPerson: '',
   platform: '',
+  platformOther: '',
   platformUid: '',
   commissionRate: '',
   trafficType: '',
+  trafficTypeOther: '',
   coopStartDate: '',
   coopEndDate: '',
   complianceStatus: '',

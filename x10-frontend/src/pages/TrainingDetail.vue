@@ -33,7 +33,10 @@
       <div v-if="activeTab === 'knowledge'">
         <div class="mb-4 flex items-center justify-between">
           <h2 class="text-lg font-bold text-slate-800">知识库文档</h2>
-          <button v-if="isAdmin" @click="showAddKnowledge = true" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm hover:bg-emerald-700">➕ 新增文档</button>
+          <div class="flex items-center gap-2">
+            <button v-if="isAdmin" @click="showCategoryManager = true" class="px-3 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm hover:bg-slate-50">🏷 分类管理</button>
+            <button v-if="isAdmin" @click="showAddKnowledge = true" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm hover:bg-emerald-700">➕ 新增文档</button>
+          </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div v-for="doc in knowledgeList" :key="doc.id" class="bg-white rounded-xl p-5 shadow-sm border border-slate-100 hover:shadow-md hover:border-slate-200 transition-all cursor-pointer relative group">
@@ -187,6 +190,36 @@
           <div class="flex justify-end gap-3 mt-6">
             <button @click="showAddKnowledge = false" class="px-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50">取消</button>
             <button @click="addKnowledge" :disabled="!newKnowledge.title" class="px-5 py-2 bg-blue-600 text-white rounded-xl text-sm hover:bg-blue-700 disabled:opacity-50">创建</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- 分类管理弹窗 -->
+    <Teleport to="body">
+      <div v-if="showCategoryManager" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" @click.self="showCategoryManager = false">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 max-h-[85vh] overflow-auto">
+          <h2 class="text-lg font-bold text-slate-900 mb-4">分类管理</h2>
+          <div class="space-y-2 mb-4">
+            <div v-for="(cat, idx) in knowledgeCategories" :key="cat" class="flex items-center gap-2 p-3 bg-slate-50 rounded-xl">
+              <template v-if="categoryEditIndex === idx">
+                <input v-model="editingCategory" @keyup.enter="confirmEditCategory" class="flex-1 h-9 px-3 rounded-lg border border-blue-300 text-sm outline-none" />
+                <button @click="confirmEditCategory" class="px-2 py-1 bg-blue-600 text-white rounded-lg text-xs">保存</button>
+                <button @click="categoryEditIndex = -1; editingCategory = ''" class="px-2 py-1 text-slate-400 hover:text-slate-600 text-xs">取消</button>
+              </template>
+              <template v-else>
+                <span class="flex-1 text-sm text-slate-700">{{ cat }}</span>
+                <button @click="startEditCategory(idx)" class="text-slate-400 hover:text-blue-500 text-xs" title="编辑">✎</button>
+                <button @click="deleteCategory(idx)" class="text-slate-400 hover:text-red-500 text-xs" title="删除">🗑</button>
+              </template>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <input v-model="newCategoryName" @keyup.enter="addCategory" placeholder="输入新分类名称..." class="flex-1 h-10 px-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-blue-500" />
+            <button @click="addCategory" :disabled="!newCategoryName.trim()" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm hover:bg-blue-700 disabled:opacity-50">添加</button>
+          </div>
+          <div class="flex justify-end mt-4">
+            <button @click="showCategoryManager = false" class="px-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50">关闭</button>
           </div>
         </div>
       </div>
@@ -508,9 +541,53 @@ function addAnnotation() {
 
 // ========== 知识库 ==========
 const knowledgeList = ref<any[]>([])
-const knowledgeCategories = ['销售规范', '技术文档', '客服规范', '公司制度', '产品知识']
+const DEFAULT_CATEGORIES = ['销售规范', '技术文档', '客服规范', '公司制度', '产品知识']
+const knowledgeCategories = ref([...DEFAULT_CATEGORIES])
 const showAddKnowledge = ref(false)
 const newKnowledge = ref({ title: '', category: '销售规范', content: '' })
+
+// 分类管理
+const showCategoryManager = ref(false)
+const editingCategory = ref('')
+const newCategoryName = ref('')
+const categoryEditIndex = ref(-1)
+
+function loadCategories() {
+  const saved = localStorage.getItem('training_knowledge_categories')
+  if (saved) { try { knowledgeCategories.value = JSON.parse(saved) } catch {} }
+}
+function saveCategories() {
+  localStorage.setItem('training_knowledge_categories', JSON.stringify(knowledgeCategories.value))
+}
+function addCategory() {
+  const name = newCategoryName.value.trim()
+  if (!name) return
+  if (knowledgeCategories.value.includes(name)) { alert('分类已存在'); return }
+  knowledgeCategories.value.push(name)
+  saveCategories()
+  newCategoryName.value = ''
+}
+function startEditCategory(idx: number) {
+  categoryEditIndex.value = idx
+  editingCategory.value = knowledgeCategories.value[idx]
+}
+function confirmEditCategory() {
+  const name = editingCategory.value.trim()
+  if (!name) return
+  if (knowledgeCategories.value.includes(name) && knowledgeCategories.value.indexOf(name) !== categoryEditIndex.value) { alert('分类已存在'); return }
+  knowledgeCategories.value[categoryEditIndex.value] = name
+  saveCategories()
+  categoryEditIndex.value = -1
+  editingCategory.value = ''
+}
+function deleteCategory(idx: number) {
+  if (!confirm('确定删除该分类？相关文档将保留但分类变为空。')) return
+  const deleted = knowledgeCategories.value[idx]
+  knowledgeCategories.value.splice(idx, 1)
+  // 更新已有文档的分类
+  knowledgeList.value.forEach(doc => { if (doc.category === deleted) doc.category = knowledgeCategories.value[0] || '未分类' })
+  saveCategories(); saveKnowledge()
+}
 
 function addKnowledge() {
   if (!newKnowledge.value.title) return
@@ -620,6 +697,9 @@ function formatDate(d: string) {
 // ========== 初始化 ==========
 onMounted(() => {
   loadBdManual()
+
+  // 加载分类
+  loadCategories()
 
   // 加载知识库
   const savedK = localStorage.getItem('training_knowledge_base')

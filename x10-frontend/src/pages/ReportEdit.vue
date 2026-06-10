@@ -76,16 +76,54 @@
         <div class="bg-white rounded-xl shadow-sm p-4 space-y-4">
           <div class="flex items-center gap-2 mb-2"><span class="text-amber-600">📄</span><h2 class="font-bold text-slate-800">总结与计划</h2></div>
           <div>
-            <label class="text-sm font-medium text-slate-700 mb-2 block flex items-center justify-between">
-              <span>工作总结 <span class="text-red-500">*</span></span>
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <template v-if="editingTitle === 'summary'">
+                  <input v-model="sectionTitles.summary" @blur="editingTitle = ''" @keyup.enter="editingTitle = ''" class="text-sm font-medium text-slate-700 px-2 py-0.5 rounded border border-blue-300 outline-none focus:border-blue-500" ref="titleInputRef" />
+                </template>
+                <template v-else>
+                  <span class="text-sm font-medium text-slate-700">{{ sectionTitles.summary }} <span class="text-red-500">*</span></span>
+                  <button @click="startEditTitle('summary')" class="text-slate-300 hover:text-blue-500 text-xs" title="修改标题">✎</button>
+                </template>
+              </div>
               <span :class="['text-xs px-2 py-0.5 rounded-full', summaryLen >= 50 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600']">
                 {{ summaryLen }} / 50字
               </span>
-            </label>
+            </div>
             <textarea v-model="summary" :placeholder="`请总结本${typeLabel.replace('报', '期')}的主要工作内容（至少50字）`" rows="4" :class="['w-full p-3 rounded-xl border resize-none outline-none text-sm', summaryLen > 0 && summaryLen < 50 ? 'border-red-300 bg-red-50' : 'border-slate-200 bg-slate-50']" /></div>
-          <div><label class="text-sm font-medium text-slate-700 mb-2 block">主要成果</label><textarea v-model="achievements" placeholder="请描述取得的主要成绩和亮点" rows="3" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 resize-none outline-none text-sm" /></div>
-          <div><label class="text-sm font-medium text-slate-700 mb-2 block">存在问题</label><textarea v-model="problems" placeholder="请描述遇到的问题和困难" rows="3" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 resize-none outline-none text-sm" /></div>
-          <div><label class="text-sm font-medium text-slate-700 mb-2 block">下阶段计划</label><textarea v-model="plans" :placeholder="`请描述下${typeLabel.replace('报', '期')}的工作计划`" rows="3" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 resize-none outline-none text-sm" /></div>
+          <div>
+            <div class="flex items-center gap-2 mb-2">
+              <template v-if="editingTitle === 'achievements'">
+                <input v-model="sectionTitles.achievements" @blur="editingTitle = ''" @keyup.enter="editingTitle = ''" class="text-sm font-medium text-slate-700 px-2 py-0.5 rounded border border-blue-300 outline-none focus:border-blue-500" />
+              </template>
+              <template v-else>
+                <span class="text-sm font-medium text-slate-700">{{ sectionTitles.achievements }}</span>
+                <button @click="startEditTitle('achievements')" class="text-slate-300 hover:text-blue-500 text-xs" title="修改标题">✎</button>
+              </template>
+            </div>
+            <textarea v-model="achievements" :placeholder="`请描述${sectionTitles.achievements}...`" rows="3" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 resize-none outline-none text-sm" /></div>
+          <div>
+            <div class="flex items-center gap-2 mb-2">
+              <template v-if="editingTitle === 'problems'">
+                <input v-model="sectionTitles.problems" @blur="editingTitle = ''" @keyup.enter="editingTitle = ''" class="text-sm font-medium text-slate-700 px-2 py-0.5 rounded border border-blue-300 outline-none focus:border-blue-500" />
+              </template>
+              <template v-else>
+                <span class="text-sm font-medium text-slate-700">{{ sectionTitles.problems }}</span>
+                <button @click="startEditTitle('problems')" class="text-slate-300 hover:text-blue-500 text-xs" title="修改标题">✎</button>
+              </template>
+            </div>
+            <textarea v-model="problems" :placeholder="`请描述${sectionTitles.problems}...`" rows="3" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 resize-none outline-none text-sm" /></div>
+          <div>
+            <div class="flex items-center gap-2 mb-2">
+              <template v-if="editingTitle === 'plans'">
+                <input v-model="sectionTitles.plans" @blur="editingTitle = ''" @keyup.enter="editingTitle = ''" class="text-sm font-medium text-slate-700 px-2 py-0.5 rounded border border-blue-300 outline-none focus:border-blue-500" />
+              </template>
+              <template v-else>
+                <span class="text-sm font-medium text-slate-700">{{ sectionTitles.plans }}</span>
+                <button @click="startEditTitle('plans')" class="text-slate-300 hover:text-blue-500 text-xs" title="修改标题">✎</button>
+              </template>
+            </div>
+            <textarea v-model="plans" :placeholder="`请描述${sectionTitles.plans}...`" rows="3" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 resize-none outline-none text-sm" /></div>
         </div>
 
         <!-- 操作按钮 -->
@@ -99,7 +137,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import AppLayout from '@/layouts/AppLayout.vue'
 import api from '@/api'
@@ -118,6 +156,22 @@ const summary = ref('')
 const achievements = ref('')
 const problems = ref('')
 const plans = ref('')
+
+// 可编辑的标题
+const DEFAULT_TITLES = { summary: '工作总结', achievements: '主要成果', problems: '存在问题', plans: '下阶段计划' }
+const sectionTitles = ref({ ...DEFAULT_TITLES })
+const editingTitle = ref('')
+
+function startEditTitle(key: string) {
+  editingTitle.value = key
+}
+
+// 从 localStorage 读取自定义标题
+const savedTitles = localStorage.getItem('report_section_titles')
+if (savedTitles) { try { sectionTitles.value = { ...DEFAULT_TITLES, ...JSON.parse(savedTitles) } } catch {} }
+
+// 监听标题变化并保存
+watch(sectionTitles, (val) => { localStorage.setItem('report_section_titles', JSON.stringify(val)) }, { deep: true })
 const targetAmount = ref('')
 const completedAmount = ref('')
 const customerCount = ref('')
