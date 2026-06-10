@@ -95,7 +95,12 @@
                 <div class="flex items-center gap-2 mb-2">
                   <span class="text-sm font-semibold text-blue-700">填写提示</span>
                 </div>
-                <pre class="text-sm text-blue-600 whitespace-pre-wrap font-sans leading-relaxed">{{ chapter.hint }}</pre>
+                <template v-if="isEditing">
+                  <textarea v-model="chapter.hint" rows="4" class="w-full p-3 rounded-xl border border-blue-200 text-sm text-blue-600 outline-none focus:border-blue-500 resize-none bg-white" placeholder="编辑本章节的填写提示..."></textarea>
+                </template>
+                <template v-else>
+                  <pre class="text-sm text-blue-600 whitespace-pre-wrap font-sans leading-relaxed">{{ chapter.hint }}</pre>
+                </template>
               </div>
 
               <!-- 章节内容编辑（整章） -->
@@ -123,10 +128,12 @@
                     </div>
                     <!-- hint 在编辑模式下也可编辑 -->
                     <template v-if="isEditing">
-                      <input v-model="section.hint" class="w-full h-8 px-3 mb-2 rounded-lg border border-slate-200 text-sm text-slate-500 italic outline-none focus:border-blue-400 bg-slate-50" placeholder="填写提示（副标题）..." />
+                      <input v-model="section.hint" class="w-full h-8 px-3 mb-1 rounded-lg border border-slate-200 text-sm text-slate-500 italic outline-none focus:border-blue-400 bg-slate-50" placeholder="填写提示（副标题）..." />
+                      <input v-model="section.placeholder" class="w-full h-8 px-3 mb-2 rounded-lg border border-blue-100 text-sm text-blue-400 outline-none focus:border-blue-400 bg-blue-50/30" placeholder="输入框提示文本（如：请填写品牌核心定位...）" />
                     </template>
                     <template v-else>
                       <p class="text-sm text-slate-500 mb-2 italic">{{ section.hint }}</p>
+                      <p v-if="section.placeholder" class="text-xs text-blue-400 mb-2">💬 {{ section.placeholder }}</p>
                     </template>
 
                     <!-- 编辑模式 -->
