@@ -76,7 +76,7 @@
         <div class="bg-white rounded-xl shadow-sm p-4 space-y-4">
           <div class="flex items-center gap-2 mb-2"><span class="text-amber-600">📄</span><h2 class="font-bold text-slate-800">总结与计划</h2></div>
           <div>
-            <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center justify-between mb-1">
               <div class="flex items-center gap-2">
                 <template v-if="editingTitle === 'summary'">
                   <input v-model="sectionTitles.summary" @blur="editingTitle = ''" @keyup.enter="editingTitle = ''" class="text-sm font-medium text-slate-700 px-2 py-0.5 rounded border border-blue-300 outline-none focus:border-blue-500" ref="titleInputRef" />
@@ -90,9 +90,18 @@
                 {{ summaryLen }} / 50字
               </span>
             </div>
-            <textarea v-model="summary" :placeholder="`请总结本${typeLabel.replace('报', '期')}的主要工作内容（至少50字）`" rows="4" :class="['w-full p-3 rounded-xl border resize-none outline-none text-sm', summaryLen > 0 && summaryLen < 50 ? 'border-red-300 bg-red-50' : 'border-slate-200 bg-slate-50']" /></div>
-          <div>
             <div class="flex items-center gap-2 mb-2">
+              <template v-if="editingPlaceholder === 'summary'">
+                <input v-model="sectionPlaceholders.summary" @blur="editingPlaceholder = ''" @keyup.enter="editingPlaceholder = ''" class="flex-1 text-xs text-slate-400 px-2 py-0.5 rounded border border-slate-200 outline-none focus:border-blue-400" placeholder="提示文本..." />
+              </template>
+              <template v-else>
+                <span class="text-xs text-slate-400 italic">{{ sectionPlaceholders.summary }}</span>
+                <button @click="startEditPlaceholder('summary')" class="text-slate-300 hover:text-blue-500 text-xs" title="修改提示文本">✎</button>
+              </template>
+            </div>
+            <textarea v-model="summary" :placeholder="sectionPlaceholders.summary" rows="4" :class="['w-full p-3 rounded-xl border resize-none outline-none text-sm', summaryLen > 0 && summaryLen < 50 ? 'border-red-300 bg-red-50' : 'border-slate-200 bg-slate-50']" /></div>
+          <div>
+            <div class="flex items-center gap-2 mb-1">
               <template v-if="editingTitle === 'achievements'">
                 <input v-model="sectionTitles.achievements" @blur="editingTitle = ''" @keyup.enter="editingTitle = ''" class="text-sm font-medium text-slate-700 px-2 py-0.5 rounded border border-blue-300 outline-none focus:border-blue-500" />
               </template>
@@ -101,9 +110,18 @@
                 <button @click="startEditTitle('achievements')" class="text-slate-300 hover:text-blue-500 text-xs" title="修改标题">✎</button>
               </template>
             </div>
-            <textarea v-model="achievements" :placeholder="`请描述${sectionTitles.achievements}...`" rows="3" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 resize-none outline-none text-sm" /></div>
-          <div>
             <div class="flex items-center gap-2 mb-2">
+              <template v-if="editingPlaceholder === 'achievements'">
+                <input v-model="sectionPlaceholders.achievements" @blur="editingPlaceholder = ''" @keyup.enter="editingPlaceholder = ''" class="flex-1 text-xs text-slate-400 px-2 py-0.5 rounded border border-slate-200 outline-none focus:border-blue-400" placeholder="提示文本..." />
+              </template>
+              <template v-else>
+                <span class="text-xs text-slate-400 italic">{{ sectionPlaceholders.achievements }}</span>
+                <button @click="startEditPlaceholder('achievements')" class="text-slate-300 hover:text-blue-500 text-xs" title="修改提示文本">✎</button>
+              </template>
+            </div>
+            <textarea v-model="achievements" :placeholder="sectionPlaceholders.achievements" rows="3" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 resize-none outline-none text-sm" /></div>
+          <div>
+            <div class="flex items-center gap-2 mb-1">
               <template v-if="editingTitle === 'problems'">
                 <input v-model="sectionTitles.problems" @blur="editingTitle = ''" @keyup.enter="editingTitle = ''" class="text-sm font-medium text-slate-700 px-2 py-0.5 rounded border border-blue-300 outline-none focus:border-blue-500" />
               </template>
@@ -112,9 +130,18 @@
                 <button @click="startEditTitle('problems')" class="text-slate-300 hover:text-blue-500 text-xs" title="修改标题">✎</button>
               </template>
             </div>
-            <textarea v-model="problems" :placeholder="`请描述${sectionTitles.problems}...`" rows="3" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 resize-none outline-none text-sm" /></div>
-          <div>
             <div class="flex items-center gap-2 mb-2">
+              <template v-if="editingPlaceholder === 'problems'">
+                <input v-model="sectionPlaceholders.problems" @blur="editingPlaceholder = ''" @keyup.enter="editingPlaceholder = ''" class="flex-1 text-xs text-slate-400 px-2 py-0.5 rounded border border-slate-200 outline-none focus:border-blue-400" placeholder="提示文本..." />
+              </template>
+              <template v-else>
+                <span class="text-xs text-slate-400 italic">{{ sectionPlaceholders.problems }}</span>
+                <button @click="startEditPlaceholder('problems')" class="text-slate-300 hover:text-blue-500 text-xs" title="修改提示文本">✎</button>
+              </template>
+            </div>
+            <textarea v-model="problems" :placeholder="sectionPlaceholders.problems" rows="3" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 resize-none outline-none text-sm" /></div>
+          <div>
+            <div class="flex items-center gap-2 mb-1">
               <template v-if="editingTitle === 'plans'">
                 <input v-model="sectionTitles.plans" @blur="editingTitle = ''" @keyup.enter="editingTitle = ''" class="text-sm font-medium text-slate-700 px-2 py-0.5 rounded border border-blue-300 outline-none focus:border-blue-500" />
               </template>
@@ -123,7 +150,16 @@
                 <button @click="startEditTitle('plans')" class="text-slate-300 hover:text-blue-500 text-xs" title="修改标题">✎</button>
               </template>
             </div>
-            <textarea v-model="plans" :placeholder="`请描述${sectionTitles.plans}...`" rows="3" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 resize-none outline-none text-sm" /></div>
+            <div class="flex items-center gap-2 mb-2">
+              <template v-if="editingPlaceholder === 'plans'">
+                <input v-model="sectionPlaceholders.plans" @blur="editingPlaceholder = ''" @keyup.enter="editingPlaceholder = ''" class="flex-1 text-xs text-slate-400 px-2 py-0.5 rounded border border-slate-200 outline-none focus:border-blue-400" placeholder="提示文本..." />
+              </template>
+              <template v-else>
+                <span class="text-xs text-slate-400 italic">{{ sectionPlaceholders.plans }}</span>
+                <button @click="startEditPlaceholder('plans')" class="text-slate-300 hover:text-blue-500 text-xs" title="修改提示文本">✎</button>
+              </template>
+            </div>
+            <textarea v-model="plans" :placeholder="sectionPlaceholders.plans" rows="3" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 resize-none outline-none text-sm" /></div>
         </div>
 
         <!-- 操作按钮 -->
@@ -172,6 +208,27 @@ if (savedTitles) { try { sectionTitles.value = { ...DEFAULT_TITLES, ...JSON.pars
 
 // 监听标题变化并保存
 watch(sectionTitles, (val) => { localStorage.setItem('report_section_titles', JSON.stringify(val)) }, { deep: true })
+
+// 可编辑的提示文本
+const DEFAULT_PLACEHOLDERS = {
+  summary: '请总结本期的主要工作内容（至少50字）',
+  achievements: '请描述取得的主要成绩和亮点',
+  problems: '请描述遇到的问题和困难',
+  plans: '请描述下阶段的工作计划'
+}
+const sectionPlaceholders = ref({ ...DEFAULT_PLACEHOLDERS })
+const editingPlaceholder = ref('')
+
+function startEditPlaceholder(key: string) {
+  editingPlaceholder.value = key
+}
+
+// 从 localStorage 读取自定义提示
+const savedPlaceholders = localStorage.getItem('report_section_placeholders')
+if (savedPlaceholders) { try { sectionPlaceholders.value = { ...DEFAULT_PLACEHOLDERS, ...JSON.parse(savedPlaceholders) } } catch {} }
+
+// 监听提示变化并保存
+watch(sectionPlaceholders, (val) => { localStorage.setItem('report_section_placeholders', JSON.stringify(val)) }, { deep: true })
 const targetAmount = ref('')
 const completedAmount = ref('')
 const customerCount = ref('')
