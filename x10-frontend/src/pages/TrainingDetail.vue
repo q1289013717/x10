@@ -73,10 +73,19 @@
         <div class="space-y-3">
           <div v-for="(chapter, cIdx) in bdChapters" :key="chapter.id" class="bg-white rounded-xl border border-slate-200 overflow-hidden">
             <!-- 章节头部 -->
-            <div @click="toggleChapter(chapter.id)" class="flex items-center gap-3 px-5 py-4 cursor-pointer hover:bg-slate-50 transition-colors">
+            <div @click="!isEditing && toggleChapter(chapter.id)" :class="['flex items-center gap-3 px-5 py-4 transition-colors', isEditing ? '' : 'cursor-pointer hover:bg-slate-50']">
               <span class="text-sm font-bold text-blue-600 w-8">{{ String(cIdx + 1).padStart(2, '0') }}</span>
-              <h3 class="font-semibold text-slate-800 flex-1">{{ chapter.title }}</h3>
-              <svg :class="['w-5 h-5 text-slate-400 transition-transform', expandedChapters.includes(chapter.id) ? 'rotate-180' : '']" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              <!-- 编辑模式下章节标题可编辑 -->
+              <template v-if="isEditing">
+                <input v-model="chapter.title" @click.stop class="flex-1 h-9 px-3 rounded-lg border border-blue-200 text-sm font-semibold text-slate-800 outline-none focus:border-blue-500 bg-blue-50/50" placeholder="章节标题..." />
+                <button @click.stop="toggleChapter(chapter.id)" class="text-slate-400 hover:text-slate-600 p-1 rounded" title="展开/折叠">
+                  <svg :class="['w-5 h-5 transition-transform', expandedChapters.includes(chapter.id) ? 'rotate-180' : '']" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+              </template>
+              <template v-else>
+                <h3 class="font-semibold text-slate-800 flex-1">{{ chapter.title }}</h3>
+                <svg :class="['w-5 h-5 text-slate-400 transition-transform', expandedChapters.includes(chapter.id) ? 'rotate-180' : '']" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </template>
             </div>
 
             <!-- 展开内容 -->
@@ -104,9 +113,21 @@
                   <div class="flex-1">
                     <div class="flex items-center gap-2 mb-2">
                       <span class="w-6 h-6 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-xs font-bold">{{ sIdx + 1 }}</span>
-                      <h4 class="font-semibold text-slate-800">{{ section.title }}</h4>
+                      <!-- 编辑模式下标题可编辑 -->
+                      <template v-if="isEditing">
+                        <input v-model="section.title" class="flex-1 h-8 px-3 rounded-lg border border-blue-200 text-sm font-semibold text-slate-800 outline-none focus:border-blue-500 bg-blue-50/50" placeholder="小节标题..." />
+                      </template>
+                      <template v-else>
+                        <h4 class="font-semibold text-slate-800">{{ section.title }}</h4>
+                      </template>
                     </div>
-                    <p class="text-sm text-slate-500 mb-2 italic">{{ section.hint }}</p>
+                    <!-- hint 在编辑模式下也可编辑 -->
+                    <template v-if="isEditing">
+                      <input v-model="section.hint" class="w-full h-8 px-3 mb-2 rounded-lg border border-slate-200 text-sm text-slate-500 italic outline-none focus:border-blue-400 bg-slate-50" placeholder="填写提示（副标题）..." />
+                    </template>
+                    <template v-else>
+                      <p class="text-sm text-slate-500 mb-2 italic">{{ section.hint }}</p>
+                    </template>
 
                     <!-- 编辑模式 -->
                     <div v-if="isEditing">
