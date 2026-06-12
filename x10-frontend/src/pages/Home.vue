@@ -353,9 +353,9 @@ async function loadAlerts() {
 }
 
 const stats = ref({
-  todayTarget: 50000,
+  todayTarget: parseInt(localStorage.getItem('daily_target') || '50000'),
   todayCompleted: 0,
-  weekTarget: 350000,
+  weekTarget: parseInt(localStorage.getItem('daily_target') || '50000') * 7,
   weekCompleted: 0,
   pendingTasks: 0,
   completedTasks: 0,
@@ -392,8 +392,9 @@ onMounted(async () => {
     await taskStore.fetchTasksByDate(today)
 
     const dayData = taskStore.tasks[today]
+    const savedDailyTarget = parseInt(localStorage.getItem('daily_target') || '50000')
     if (dayData) {
-      stats.value.todayTarget = dayData.targetAmount || 50000
+      stats.value.todayTarget = dayData.targetAmount || savedDailyTarget
       stats.value.todayCompleted = dayData.completedAmount || 0
       stats.value.pendingTasks = dayData.tasks?.filter((t: any) => t.status === 'pending').length || 0
       stats.value.completedTasks = dayData.tasks?.filter((t: any) => t.status === 'completed').length || 0

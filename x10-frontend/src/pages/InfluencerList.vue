@@ -1,5 +1,17 @@
 <template>
-  <AppLayout current-page="influencer-list" title="达人合作台账" subtitle="管理达人合作记录与数据">
+  <AppLayout current-page="influencer-list">
+    <template #title>
+      <div class="flex items-center gap-2">
+        <h1 v-if="!editingTitle" class="font-bold text-slate-900 text-lg lg:text-xl tracking-tight truncate">{{ pageTitle }}</h1>
+        <input v-else v-model="pageTitle" @blur="saveTitle" @keyup.enter="saveTitle" class="font-bold text-slate-900 text-lg lg:text-xl border-b-2 border-blue-500 outline-none bg-transparent w-48" />
+        <button @click="editingTitle = true" class="text-slate-400 hover:text-blue-600 text-sm" title="编辑标题">✎</button>
+      </div>
+      <div class="flex items-center gap-2 mt-0.5">
+        <p v-if="!editingSubtitle" class="text-xs text-slate-400 truncate">{{ pageSubtitle }}</p>
+        <input v-else v-model="pageSubtitle" @blur="saveSubtitle" @keyup.enter="saveSubtitle" class="text-xs text-slate-400 border-b border-blue-500 outline-none bg-transparent w-64" />
+        <button @click="editingSubtitle = true" class="text-slate-400 hover:text-blue-600 text-xs" title="编辑副标题">✎</button>
+      </div>
+    </template>
     <template #actions>
       <router-link to="/influencer-summary" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm hover:bg-blue-700">📊 汇总统计</router-link>
       <button @click="openForm()" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm hover:bg-emerald-700">+ 新增记录</button>
@@ -225,6 +237,21 @@ const showForm = ref(false)
 const editingId = ref<string | null>(null)
 const page = ref(1)
 const pageSize = 10
+
+// 页面标题可编辑
+const editingTitle = ref(false)
+const editingSubtitle = ref(false)
+const pageTitle = ref(localStorage.getItem('influencer_page_title') || '达人合作台账')
+const pageSubtitle = ref(localStorage.getItem('influencer_page_subtitle') || '管理达人合作记录与数据')
+
+function saveTitle() {
+  localStorage.setItem('influencer_page_title', pageTitle.value)
+  editingTitle.value = false
+}
+function saveSubtitle() {
+  localStorage.setItem('influencer_page_subtitle', pageSubtitle.value)
+  editingSubtitle.value = false
+}
 
 const platforms = ['抖音', '快手', '小红书', '视频号', '淘宝直播', '其他']
 

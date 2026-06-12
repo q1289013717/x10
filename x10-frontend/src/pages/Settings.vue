@@ -26,7 +26,7 @@
         <div class="overflow-x-auto">
           <table class="w-full"><thead><tr class="border-b border-slate-100"><th class="px-4 py-3 text-left text-sm font-semibold text-slate-600">账号</th><th class="px-4 py-3 text-left text-sm font-semibold text-slate-600">姓名</th><th class="px-4 py-3 text-left text-sm font-semibold text-slate-600">角色</th><th class="px-4 py-3 text-left text-sm font-semibold text-slate-600">公司</th><th class="px-4 py-3 text-center text-sm font-semibold text-slate-600">状态</th><th class="px-4 py-3 text-center text-sm font-semibold text-slate-600">操作</th></tr></thead>
             <tbody>
-              <tr v-for="a in accounts" :key="a.id" class="border-b border-slate-50"><td class="px-4 py-3 text-sm font-medium">{{ a.account }}</td><td class="px-4 py-3 text-sm">{{ a.name }}</td><td class="px-4 py-3 text-sm"><span :class="['px-2 py-0.5 rounded text-xs', a.role === '管理员' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600']">{{ a.role }}</span></td><td class="px-4 py-3 text-sm">{{ a.company }}</td><td class="px-4 py-3 text-center"><span :class="['px-2 py-0.5 rounded text-xs', a.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700']">{{ a.status === 'active' ? '正常' : '禁用' }}</span></td><td class="px-4 py-3 text-center"><button @click="editAccount(a)" class="text-blue-600 text-sm mr-2">✎</button><button @click="deleteAccount(a.id)" class="text-red-500 text-sm">🗑</button></td></tr>
+              <tr v-for="a in accounts" :key="a.id" class="border-b border-slate-50"><td class="px-4 py-3 text-sm font-medium">{{ a.account }}</td><td class="px-4 py-3 text-sm">{{ a.name }}</td><td class="px-4 py-3 text-sm"><span :class="['px-2 py-0.5 rounded text-xs', a.role === '管理员' || a.role === 'admin' || a.role === '集团管理员' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600']">{{ a.role }}</span></td><td class="px-4 py-3 text-sm">{{ a.company }}</td><td class="px-4 py-3 text-center"><span :class="['px-2 py-0.5 rounded text-xs', a.status === 'active' || a.status === 'enabled' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700']">{{ a.status === 'active' || a.status === 'enabled' ? '正常' : '禁用' }}</span></td><td class="px-4 py-3 text-center"><button @click="editAccount(a)" class="text-blue-600 text-sm mr-2">✎</button><button @click="deleteAccount(a.id)" class="text-red-500 text-sm">🗑</button></td></tr>
             </tbody></table>
         </div>
       </div>
@@ -50,8 +50,8 @@
         <div v-if="showAccountForm" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" @click.self="showAccountForm = false">
           <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
             <h3 class="font-bold text-slate-800 text-lg mb-4">{{ editingAccountId ? '编辑账号' : '添加账号' }}</h3>
-            <div class="space-y-3">
-              <select v-model="accountForm.role" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none"><option value="管理员">管理员</option><option value="用户">用户</option></select>
+          <div class="space-y-3">
+            <select v-model="accountForm.role" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none"><option value="集团管理员">集团管理员</option><option value="分公司管理员">分公司管理员</option><option value="员工">员工</option></select>
               <input v-model="accountForm.name" placeholder="姓名" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none" />
               <input v-model="accountForm.account" placeholder="账号" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none" />
               <input v-model="accountForm.password" type="password" placeholder="密码" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm outline-none" />
@@ -68,6 +68,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import AppLayout from '@/layouts/AppLayout.vue'
+import api from '@/api'
 
 const activeTab = ref('system')
 const tabs = [
@@ -80,34 +81,77 @@ const config = ref({ systemName: 'X10增长引擎', companyName: '涌动花鱼�
 const accounts = ref<any[]>([])
 const showAccountForm = ref(false)
 const editingAccountId = ref<string | null>(null)
-const accountForm = ref({ role: '用户', name: '', account: '', password: '', company: '' })
+const accountForm = ref({ role: '员工', name: '', account: '', password: '', company: '' })
+const loadingAccounts = ref(false)
 
 function saveConfig() {
   localStorage.setItem('system_config', JSON.stringify(config.value))
   localStorage.setItem('company_name', config.value.companyName)
+  localStorage.setItem('daily_target', config.value.dailyTarget)
   alert('配置已保存')
 }
 
-function editAccount(a: any) { accountForm.value = { ...a }; editingAccountId.value = a.id; showAccountForm.value = true }
-
-function saveAccount() {
-  if (!accountForm.value.name || !accountForm.value.account || !accountForm.value.password) { alert('请填写完整信息'); return }
-  if (editingAccountId.value) {
-    const i = accounts.value.findIndex(a => a.id === editingAccountId.value)
-    if (i >= 0) accounts.value[i] = { ...accountForm.value, id: editingAccountId.value, status: 'active' }
-  } else {
-    accounts.value.push({ ...accountForm.value, id: Date.now().toString(), status: 'active' })
-  }
-  saveAccounts(); showAccountForm.value = false; editingAccountId.value = null
-  accountForm.value = { role: '用户', name: '', account: '', password: '', company: '' }
+function editAccount(a: any) {
+  accountForm.value = { role: a.role, name: a.name, account: a.account, password: '', company: a.company || '' }
+  editingAccountId.value = a.id
+  showAccountForm.value = true
 }
 
-function deleteAccount(id: string) { if (!confirm('确定删除？')) return; accounts.value = accounts.value.filter(a => a.id !== id); saveAccounts() }
-function saveAccounts() { localStorage.setItem('accounts_list', JSON.stringify(accounts.value)) }
+async function saveAccount() {
+  if (!accountForm.value.name || !accountForm.value.account) { alert('请填写账号和姓名'); return }
+  if (!editingAccountId.value && !accountForm.value.password) { alert('新建账号需要填写密码'); return }
+
+  try {
+    if (editingAccountId.value) {
+      const payload: any = { name: accountForm.value.name, role: accountForm.value.role, company: accountForm.value.company }
+      if (accountForm.value.password) payload.password = accountForm.value.password
+      await api.put(`/auth/users/${editingAccountId.value}`, payload)
+      alert('更新成功')
+    } else {
+      await api.post('/auth/users', {
+        account: accountForm.value.account,
+        name: accountForm.value.name,
+        password: accountForm.value.password,
+        role: accountForm.value.role,
+        company: accountForm.value.company,
+      })
+      alert('创建成功')
+    }
+    showAccountForm.value = false
+    editingAccountId.value = null
+    accountForm.value = { role: '员工', name: '', account: '', password: '', company: '' }
+    await fetchAccounts()
+  } catch (e: any) {
+    const msg = e.response?.data?.detail || '操作失败'
+    alert(msg)
+  }
+}
+
+async function deleteAccount(id: string) {
+  if (!confirm('确定删除该账号？')) return
+  try {
+    await api.delete(`/auth/users/${id}`)
+    await fetchAccounts()
+  } catch (e: any) {
+    alert(e.response?.data?.detail || '删除失败')
+  }
+}
+
+async function fetchAccounts() {
+  loadingAccounts.value = true
+  try {
+    const res = await api.get('/auth/users')
+    accounts.value = res.data || []
+  } catch (e) {
+    console.error('获取账号列表失败', e)
+  } finally {
+    loadingAccounts.value = false
+  }
+}
 
 function exportData() {
   const data: any = {}
-  const keys = ['calendar_tasks', 'work_reports', 'influencer_records', 'daren_resources', 'consensus_archives', 'training_problems', 'accounts_list', 'system_config', 'company_name']
+  const keys = ['calendar_tasks', 'work_reports', 'influencer_records', 'daren_resources', 'consensus_archives', 'training_problems', 'system_config', 'company_name']
   keys.forEach(k => { const v = localStorage.getItem(k); if (v) data[k] = JSON.parse(v) })
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
@@ -126,7 +170,6 @@ function clearAllData() {
 onMounted(() => {
   const saved = localStorage.getItem('system_config')
   if (saved) { try { config.value = JSON.parse(saved) } catch {} }
-  const acc = localStorage.getItem('accounts_list')
-  if (acc) { try { accounts.value = JSON.parse(acc) } catch {} }
+  fetchAccounts()
 })
 </script>
