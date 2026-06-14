@@ -46,11 +46,11 @@
               <tr v-for="r in paginatedRecords" :key="r.id" class="border-b border-slate-50 hover:bg-slate-50/50">
                 <td class="px-3 py-3 text-sm whitespace-nowrap">{{ r.date }}</td>
                 <td class="px-3 py-3"><span class="font-medium text-slate-800 text-sm">{{ r.influencerName }}</span></td>
-                <td class="px-3 py-3"><span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-600">{{ r.platform === '其他' && r.platformOther ? r.platformOther : r.platform }}</span></td>
+                <td class="px-3 py-3"><span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-600">{{ r.platform === '其他' && (r.platformOther || r.platform_other) ? (r.platformOther || r.platform_other) : r.platform }}</span></td>
                 <td class="px-3 py-3 text-right text-sm">{{ formatNum(r.fansCount) }}</td>
                 <td class="px-3 py-3 text-right text-sm font-medium">¥{{ formatNum(r.gmv || 0) }}</td>
                 <td class="px-3 py-3 text-right text-sm">{{ r.roi || '-' }}</td>
-                <td class="px-3 py-3 text-center"><span :class="getPayStatusClass(r.payStatus)">{{ r.payStatus || '未支付' }}</span></td>
+                <td class="px-3 py-3 text-center"><span :class="getPayStatusClass(r.pay_status || r.payStatus || '未支付')">{{ r.pay_status || r.payStatus || '未支付' }}</span></td>
                 <td class="px-3 py-3 text-center">
                   <button @click="editRecord(r)" class="text-blue-600 hover:text-blue-700 text-sm mr-2" title="编辑">✎</button>
                   <button @click="deleteRecord(r.id)" class="text-red-500 hover:text-red-600 text-sm" title="删除">🗑</button>
@@ -232,11 +232,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import AppLayout from '@/layouts/AppLayout.vue'
+import api from '@/api'
 
 const showForm = ref(false)
 const editingId = ref<string | null>(null)
 const page = ref(1)
 const pageSize = 10
+const loading = ref(false)
 
 // 页面标题可编辑
 const editingTitle = ref(false)
@@ -286,13 +288,18 @@ const records = ref<any[]>([])
 
 const filteredRecords = computed(() => {
   return records.value.filter(r => {
-    if (filters.value.influencerName && !r.influencerName.toLowerCase().includes(filters.value.influencerName.toLowerCase())) return false
-    if (filters.value.platform !== 'all' && r.platform !== filters.value.platform) return false
-    if (filters.value.payStatus !== 'all' && r.payStatus !== filters.value.payStatus) return false
-    if (filters.value.startDate && r.date < filters.value.startDate) return false
-    if (filters.value.endDate && r.date > filters.value.endDate) return false
+    const name = r.influencer_name || r.influencerName || ''
+    if (filters.value.influencerName && !name.toLowerCase().includes(filters.value.influencerName.toLowerCase())) return false
+    // 平台：处理"其他"选项
+    const plat = (r.platform === '其他' && r.platformOther) ? r.platformOther : (r.platform || '')
+    const filterPlat = filters.value.platform
+    if (filterPlat !== 'all' && !plat.includes(filterPlat)) return false
+    const pay = r.pay_status || r.payStatus || ''
+    if (filters.value.payStatus !== 'all' && pay !== filters.value.payStatus) return false
+    if (filters.value.startDate && (r.date || '') < filters.value.startDate) return false
+    if (filters.value.endDate && (r.date || '') > filters.value.endDate) return false
     return true
-  }).sort((a, b) => b.date.localeCompare(a.date))
+  }).sort((a, b) => (b.date || '').localeCompare(a.date || ''))
 })
 
 const totalPages = computed(() => Math.ceil(filteredRecords.value.length / pageSize) || 1)
@@ -310,26 +317,121 @@ function getPayStatusClass(status: string) {
 }
 
 function openForm() { form.value = { ...EMPTY_FORM }; editingId.value = null; showForm.value = true }
-function editRecord(r: any) { form.value = { ...r }; editingId.value = r.id; showForm.value = true }
+function editRecord(r: any) { form.value = mapToFrontend(r); editingId.value = r.id; showForm.value = true }
 
-function saveRecord() {
-  if (!form.value.influencerName) return
-  const payload = { ...form.value }
-  if (editingId.value) {
-    const i = records.value.findIndex(r => r.id === editingId.value)
-    if (i >= 0) records.value[i] = { ...payload, id: editingId.value }
-  } else {
-    records.value.unshift({ ...payload, id: Date.now().toString() })
+// 映射前端字段到后端 snake_case
+function mapToBackend(f: typeof form.value) {
+  return {
+    date: f.date,
+    influencer_name: f.influencerName,
+    influencer_id: f.influencerId,
+    contact_person: f.contactPerson,
+    platform: f.platform === '其他' ? (f.platformOther || '其他') : f.platform,
+    platform_other: f.platformOther,
+    platform_uid: f.platformUid,
+    commission_rate: parseFloat(f.commissionRate) || 0,
+    traffic_type: f.trafficType === '其他' ? (f.trafficTypeOther || '其他') : f.trafficType,
+    traffic_type_other: f.trafficTypeOther,
+    coop_start_date: f.coopStartDate || null,
+    coop_end_date: f.coopEndDate || null,
+    compliance_status: f.complianceStatus,
+    pay_status: f.payStatus,
+    gmv: parseFloat(f.gmv) || 0,
+    roi: parseFloat(f.roi) || 0,
+    conversion_rate: parseFloat(f.conversionRate) || 0,
+    return_rate: parseFloat(f.returnRate) || 0,
+    rebroadcast_intent: f.rebroadcastIntent,
+    rebroadcast_time: f.rebroadcastTime || null,
+    remark: f.remark,
   }
-  save(); showForm.value = false; editingId.value = null
 }
 
-function deleteRecord(id: string) { if (!confirm('确定删除？')) return; records.value = records.value.filter(r => r.id !== id); save() }
+// 映射后端字段到前端 camelCase
+function mapToFrontend(r: any) {
+  return {
+    id: r.id,
+    date: r.date || '',
+    influencerName: r.influencer_name || r.influencerName || '',
+    influencerId: r.influencer_id || r.influencerId || '',
+    contactPerson: r.contact_person || r.contactPerson || '',
+    platform: r.platform_other ? '其他' : (r.platform || ''),
+    platformOther: r.platform_other || '',
+    platformUid: r.platform_uid || r.platformUid || '',
+    commissionRate: r.commission_rate ?? r.commissionRate ?? '',
+    trafficType: r.traffic_type_other ? '其他' : (r.traffic_type || r.trafficType || ''),
+    trafficTypeOther: r.traffic_type_other || '',
+    coopStartDate: r.coop_start_date || r.coopStartDate || '',
+    coopEndDate: r.coop_end_date || r.coopEndDate || '',
+    complianceStatus: r.compliance_status || r.complianceStatus || '',
+    payStatus: r.pay_status || r.payStatus || '',
+    gmv: r.gmv ?? '',
+    roi: r.roi ?? '',
+    conversionRate: r.conversion_rate ?? r.conversionRate ?? '',
+    returnRate: r.return_rate ?? r.returnRate ?? '',
+    rebroadcastIntent: r.rebroadcast_intent || r.rebroadcastIntent || '',
+    rebroadcastTime: r.rebroadcast_time || r.rebroadcastTime || '',
+    remark: r.remark || '',
+  }
+}
 
-function save() { localStorage.setItem('influencer_records', JSON.stringify(records.value)) }
+async function fetchRecords() {
+  loading.value = true
+  try {
+    const res = await api.get('/influencers/records', { params: { limit: 200 } })
+    records.value = (res.data || []).map(mapToFrontend)
+  } catch {
+    // 降级到 localStorage
+    const saved = localStorage.getItem('influencer_records')
+    if (saved) { try { records.value = JSON.parse(saved) } catch {} }
+  } finally {
+    loading.value = false
+  }
+}
 
-onMounted(() => {
-  const saved = localStorage.getItem('influencer_records')
-  if (saved) { try { records.value = JSON.parse(saved) } catch {} }
-})
+async function saveRecord() {
+  if (!form.value.influencerName) return
+  loading.value = true
+  try {
+    const payload = mapToBackend(form.value)
+    if (editingId.value) {
+      await api.put(`/influencers/records/${editingId.value}`, payload)
+    } else {
+      await api.post('/influencers/records', payload)
+    }
+    await fetchRecords()
+    showForm.value = false
+    editingId.value = null
+  } catch (e: any) {
+    // 降级到本地存储
+    const payload = { ...form.value }
+    if (editingId.value) {
+      const i = records.value.findIndex(r => r.id === editingId.value)
+      if (i >= 0) records.value[i] = { ...payload, id: editingId.value }
+    } else {
+      records.value.unshift({ ...payload, id: Date.now().toString() })
+    }
+    localStorage.setItem('influencer_records', JSON.stringify(records.value))
+    showForm.value = false
+    editingId.value = null
+    alert('后端暂不可用，已保存到本地')
+  } finally {
+    loading.value = false
+  }
+}
+
+async function deleteRecord(id: string) {
+  if (!confirm('确定删除？')) return
+  loading.value = true
+  try {
+    await api.delete(`/influencers/records/${id}`)
+    await fetchRecords()
+  } catch {
+    records.value = records.value.filter(r => r.id !== id)
+    localStorage.setItem('influencer_records', JSON.stringify(records.value))
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(fetchRecords)
 </script>

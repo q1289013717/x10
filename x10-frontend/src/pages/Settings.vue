@@ -77,7 +77,7 @@ const tabs = [
   { key: 'data', label: '数据管理' }
 ]
 
-const config = ref({ systemName: 'X10增长引擎', companyName: '涌动花鱼科技有限公司', dailyTarget: '500000' })
+const config = ref({ systemName: localStorage.getItem('system_config') ? JSON.parse(localStorage.getItem('system_config') || '{}').systemName || 'X10增长引擎' : 'X10增长引擎', companyName: localStorage.getItem('company_name') || '涌动花鱼科技有限公司', dailyTarget: localStorage.getItem('daily_target') || '500000' })
 const accounts = ref<any[]>([])
 const showAccountForm = ref(false)
 const editingAccountId = ref<string | null>(null)

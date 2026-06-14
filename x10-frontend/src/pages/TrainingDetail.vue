@@ -121,6 +121,7 @@
                       <!-- 编辑模式下标题可编辑 -->
                       <template v-if="isEditing">
                         <input v-model="section.title" class="flex-1 h-8 px-3 rounded-lg border border-blue-200 text-sm font-semibold text-slate-800 outline-none focus:border-blue-500 bg-blue-50/50" placeholder="小节标题..." />
+                        <button @click="removeSection(chapter, sIdx)" class="text-red-400 hover:text-red-600 p-1 rounded" title="删除此问题">🗑</button>
                       </template>
                       <template v-else>
                         <h4 class="font-semibold text-slate-800">{{ section.title }}</h4>
@@ -167,6 +168,20 @@
               <!-- 管理员添加批注按钮 -->
               <div v-if="isAdmin && !isEditing" class="mt-3">
                 <button @click="openAnnotation(chapter.id)" class="text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">➕ 添加批注</button>
+              </div>
+
+              <!-- 编辑模式下：添加新小节 -->
+              <div v-if="isEditing" class="mt-4 border-t border-dashed border-blue-200 pt-4">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-sm font-semibold text-blue-600">➕ 添加新问题/小节</span>
+                  <span class="text-xs text-slate-400">(在此章节下新增填写项)</span>
+                </div>
+                <div class="flex gap-2 mb-2">
+                  <input v-model="newSectionTitle[chapter.id]" placeholder="小节标题..." class="flex-1 h-9 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+                  <input v-model="newSectionHint[chapter.id]" placeholder="提示文本(选填)..." class="w-48 h-9 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+                  <input v-model="newSectionPlaceholder[chapter.id]" placeholder="输入框提示(选填)..." class="w-56 h-9 px-3 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
+                  <button @click="addSection(chapter)" class="px-4 h-9 bg-emerald-600 text-white rounded-lg text-sm hover:bg-emerald-700 transition-colors">添加</button>
+                </div>
               </div>
             </div>
           </div>
@@ -522,6 +537,32 @@ function loadBdManual() {
   }
 }
 
+// ========== 添加新小节（问题） ==========
+const newSectionTitle = ref<Record<string, string>>({})
+const newSectionHint = ref<Record<string, string>>({})
+const newSectionPlaceholder = ref<Record<string, string>>({})
+
+function addSection(chapter: Chapter) {
+  const title = newSectionTitle.value[chapter.id]?.trim()
+  if (!title) { alert('请输入问题标题'); return }
+  chapter.sections.push({
+    title,
+    content: '',
+    placeholder: newSectionPlaceholder.value[chapter.id]?.trim() || '请填写...',
+    hint: newSectionHint.value[chapter.id]?.trim() || ''
+  })
+  // 清空输入
+  newSectionTitle.value[chapter.id] = ''
+  newSectionHint.value[chapter.id] = ''
+  newSectionPlaceholder.value[chapter.id] = ''
+}
+
+// 删除小节
+function removeSection(chapter: Chapter, sIdx: number) {
+  if (!confirm('确定删除此问题？')) return
+  chapter.sections.splice(sIdx, 1)
+}
+
 const editSnapshot = ref<Chapter[] | null>(null)
 function startEdit() {
   editSnapshot.value = JSON.parse(JSON.stringify(bdChapters.value))
@@ -580,9 +621,17 @@ const editingCategory = ref('')
 const newCategoryName = ref('')
 const categoryEditIndex = ref(-1)
 
-function loadCategories() {
-  const saved = localStorage.getItem('training_knowledge_categories')
-  if (saved) { try { knowledgeCategories.value = JSON.parse(saved) } catch {} }
+async function loadCategories() {
+  try {
+    const res = await api.get('/training/docs/categories', { params: { source_type: 'knowledge' } })
+    if (res.data?.length) {
+      knowledgeCategories.value = res.data.map((c: any) => c.name || c)
+    }
+  } catch {
+    // 降级到 localStorage
+    const saved = localStorage.getItem('training_knowledge_categories')
+    if (saved) { try { knowledgeCategories.value = JSON.parse(saved) } catch {} }
+  }
 }
 function saveCategories() {
   localStorage.setItem('training_knowledge_categories', JSON.stringify(knowledgeCategories.value))
@@ -614,34 +663,69 @@ function deleteCategory(idx: number) {
   knowledgeCategories.value.splice(idx, 1)
   // 更新已有文档的分类
   knowledgeList.value.forEach(doc => { if (doc.category === deleted) doc.category = knowledgeCategories.value[0] || '未分类' })
-  saveCategories(); saveKnowledge()
+  saveCategories()
 }
 
-function addKnowledge() {
+async function addKnowledge() {
   if (!newKnowledge.value.title) return
-  const doc = {
-    id: 'k_' + Date.now(),
-    title: newKnowledge.value.title,
-    category: newKnowledge.value.category,
-    content: newKnowledge.value.content,
-    desc: newKnowledge.value.content?.slice(0, 60),
-    icon: '📄',
-    views: 0,
-    author: currentUser.value?.name || '管理员',
-    createdAt: new Date().toISOString()
+  try {
+    await api.post('/training/docs', {
+      title: newKnowledge.value.title,
+      category: newKnowledge.value.category,
+      content: newKnowledge.value.content,
+      source_type: 'knowledge',
+    })
+    await fetchKnowledgeList()
+  } catch (e: any) {
+    // 降级到本地
+    const doc = {
+      id: 'k_' + Date.now(),
+      title: newKnowledge.value.title,
+      category: newKnowledge.value.category,
+      content: newKnowledge.value.content,
+      desc: newKnowledge.value.content?.slice(0, 60),
+      icon: '📄',
+      views: 0,
+      author: currentUser.value?.name || '管理员',
+      createdAt: new Date().toISOString()
+    }
+    knowledgeList.value.unshift(doc)
+    localStorage.setItem('training_knowledge_base', JSON.stringify(knowledgeList.value))
+    alert('后端暂不可用，已保存到本地')
   }
-  knowledgeList.value.unshift(doc)
-  saveKnowledge()
   showAddKnowledge.value = false
   newKnowledge.value = { title: '', category: '销售规范', content: '' }
 }
-function deleteKnowledge(id: string) {
+
+async function deleteKnowledge(id: string) {
   if (!confirm('确定删除该文档？')) return
-  knowledgeList.value = knowledgeList.value.filter(k => k.id !== id)
-  saveKnowledge()
+  try {
+    await api.delete(`/training/docs/${id}`)
+    await fetchKnowledgeList()
+  } catch {
+    knowledgeList.value = knowledgeList.value.filter(k => k.id !== id)
+    localStorage.setItem('training_knowledge_base', JSON.stringify(knowledgeList.value))
+  }
 }
-function saveKnowledge() {
-  localStorage.setItem('training_knowledge_base', JSON.stringify(knowledgeList.value))
+
+async function fetchKnowledgeList() {
+  try {
+    const res = await api.get('/training/docs', { params: { source_type: 'knowledge', limit: 200 } })
+    knowledgeList.value = (res.data || []).map((d: any) => ({
+      id: d.id,
+      title: d.title,
+      category: d.category || '未分类',
+      content: d.content || '',
+      desc: d.content?.slice(0, 60) || '',
+      icon: '📄',
+      views: d.views || 0,
+      author: d.author || '',
+      createdAt: d.created_at || '',
+    }))
+  } catch {
+    const saved = localStorage.getItem('training_knowledge_base')
+    if (saved) { try { knowledgeList.value = JSON.parse(saved) } catch {} }
+  }
 }
 
 // ========== 难题库 ==========
@@ -649,31 +733,64 @@ const problemList = ref<any[]>([])
 const showAddProblem = ref(false)
 const newProblem = ref({ title: '', description: '', solution: '' })
 
-function submitProblem() {
+async function submitProblem() {
   if (!newProblem.value.title || !newProblem.value.description || !newProblem.value.solution) return
-  const p = {
-    id: 'p_' + Date.now(),
-    title: newProblem.value.title,
-    description: newProblem.value.description,
-    solution: newProblem.value.solution,
-    author: currentUser.value?.name || '未知用户',
-    authorId: currentUser.value?.id,
-    status: 'pending',
-    createdAt: new Date().toISOString()
+  try {
+    await api.post('/training/problems', {
+      title: newProblem.value.title,
+      description: newProblem.value.description,
+      solution: newProblem.value.solution,
+    })
+    await fetchProblems()
+  } catch {
+    // 降级到本地
+    const p = {
+      id: 'p_' + Date.now(),
+      title: newProblem.value.title,
+      description: newProblem.value.description,
+      solution: newProblem.value.solution,
+      author: currentUser.value?.name || '未知用户',
+      authorId: currentUser.value?.id,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    }
+    problemList.value.unshift(p)
+    localStorage.setItem('training_problems', JSON.stringify(problemList.value))
+    alert('后端暂不可用，已保存到本地')
   }
-  problemList.value.unshift(p)
-  saveProblems()
   showAddProblem.value = false
   newProblem.value = { title: '', description: '', solution: '' }
 }
-function approveProblem(id: string, approve: boolean) {
-  const p = problemList.value.find(x => x.id === id)
-  if (!p) return
-  p.status = approve ? 'approved' : 'rejected'
-  saveProblems()
+
+async function approveProblem(id: string, approve: boolean) {
+  try {
+    await api.put(`/training/problems/${id}/approve`, { status: approve ? 'approved' : 'rejected' })
+    await fetchProblems()
+  } catch {
+    const p = problemList.value.find(x => x.id === id)
+    if (!p) return
+    p.status = approve ? 'approved' : 'rejected'
+    localStorage.setItem('training_problems', JSON.stringify(problemList.value))
+  }
 }
-function saveProblems() {
-  localStorage.setItem('training_problems', JSON.stringify(problemList.value))
+
+async function fetchProblems() {
+  try {
+    const res = await api.get('/training/problems', { params: { limit: 200 } })
+    problemList.value = (res.data || []).map((p: any) => ({
+      id: p.id,
+      title: p.title,
+      description: p.description || '',
+      solution: p.solution || '',
+      author: p.author || p.created_by || '未知用户',
+      authorId: p.created_by || '',
+      status: p.status || 'pending',
+      createdAt: p.created_at || '',
+    }))
+  } catch {
+    const saved = localStorage.getItem('training_problems')
+    if (saved) { try { problemList.value = JSON.parse(saved) } catch {} }
+  }
 }
 
 // ========== 员工列表 ==========
@@ -716,6 +833,22 @@ function viewEmployeeManual(emp: any) {
   alert(`已切换到「${emp.name}」的BD自查手册（只读模式）`)
 }
 
+async function fetchEmployees() {
+  try {
+    const res = await api.get('/auth/users')
+    const users = res.data || []
+    employees.value = users.filter((u: any) => u.id !== currentUser.value?.id)
+  } catch {
+    const savedUsers = localStorage.getItem('users')
+    if (savedUsers) {
+      try {
+        const users = JSON.parse(savedUsers)
+        employees.value = users.filter((u: any) => u.id !== currentUser.value?.id)
+      } catch {}
+    }
+  }
+}
+
 function formatDate(d: string) {
   if (!d) return ''
   const date = new Date(d)
@@ -723,31 +856,19 @@ function formatDate(d: string) {
 }
 
 // ========== 初始化 ==========
-onMounted(() => {
+onMounted(async () => {
   loadBdManual()
 
   // 加载分类
-  loadCategories()
+  await loadCategories()
 
   // 加载知识库
-  const savedK = localStorage.getItem('training_knowledge_base')
-  if (savedK) {
-    try { knowledgeList.value = JSON.parse(savedK) } catch {}
-  }
+  await fetchKnowledgeList()
 
   // 加载难题库
-  const savedP = localStorage.getItem('training_problems')
-  if (savedP) {
-    try { problemList.value = JSON.parse(savedP) } catch {}
-  }
+  await fetchProblems()
 
   // 加载员工列表
-  const savedUsers = localStorage.getItem('users')
-  if (savedUsers) {
-    try {
-      const users = JSON.parse(savedUsers)
-      employees.value = users.filter((u: any) => u.id !== currentUser.value?.id)
-    } catch {}
-  }
+  await fetchEmployees()
 })
 </script>

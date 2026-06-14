@@ -13,11 +13,32 @@
           <span class="text-white text-base">⚡</span>
         </div>
         <div class="flex-1 min-w-0">
-          <h1 class="font-bold text-base text-white tracking-tight truncate flex items-center gap-2">
-            X10增长引擎
+          <template v-if="isAdmin && editingSystemName">
+            <input
+              v-model="editSystemNameValue"
+              @blur="saveSystemName"
+              @keyup.enter="saveSystemName"
+              class="font-bold text-base text-white tracking-tight w-full bg-transparent border-b border-blue-400 outline-none"
+            />
+          </template>
+          <h1 v-else
+            class="font-bold text-base text-white tracking-tight truncate flex items-center gap-2"
+            :class="{ 'cursor-pointer': isAdmin }"
+            @dblclick="isAdmin && startEditSystemName()"
+          >
+            {{ systemName }}
             <span class="text-blue-400 text-xs">✨</span>
+            <button v-if="isAdmin" @click="startEditSystemName()" class="opacity-50 hover:opacity-100 text-[10px]">✎</button>
           </h1>
-          <p class="text-xs text-slate-400 truncate">让增长可复制</p>
+          <template v-if="isAdmin && editingSubtitle">
+            <input
+              v-model="editSubtitleValue"
+              @blur="saveSubtitle"
+              @keyup.enter="saveSubtitle"
+              class="text-xs text-slate-400 truncate w-full bg-transparent border-b border-blue-400/50 outline-none mt-0.5"
+            />
+          </template>
+          <p v-else class="text-xs text-slate-400 truncate">{{ subtitle }}</p>
         </div>
       </div>
     </div>
@@ -25,7 +46,22 @@
     <!-- 菜单区域 -->
     <nav class="flex-1 p-3 space-y-1 overflow-y-auto relative z-10">
       <div class="px-3 py-2">
-        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">核心功能</span>
+        <template v-if="isAdmin && editingSectionTitle">
+          <input
+            v-model="editSectionValue"
+            @blur="saveSectionTitle"
+            @keyup.enter="saveSectionTitle"
+            class="text-xs font-semibold text-slate-500 uppercase tracking-wider bg-transparent border-b border-blue-400/50 outline-none w-full"
+          />
+        </template>
+        <span
+          v-else
+          class="text-xs font-semibold text-slate-500 uppercase tracking-wider"
+          :class="{ 'cursor-pointer': isAdmin }"
+          @dblclick="isAdmin && (editingSectionTitle = true, editSectionValue = menuSectionTitle)"
+        >{{ menuSectionTitle }}
+          <button v-if="isAdmin" @click="editingSectionTitle = true; editSectionValue = menuSectionTitle" class="ml-1 text-[10px] opacity-50 hover:opacity-100">✎</button>
+        </span>
       </div>
 
       <button
@@ -50,9 +86,25 @@
         </div>
 
         <div class="flex-1 min-w-0">
-          <p :class="['font-medium text-sm', currentPage === item.id ? 'text-white' : 'text-slate-200 group-hover:text-white']">
-            {{ item.label }}
-          </p>
+          <template v-if="isAdmin && editingMenuId === item.id">
+            <input
+              v-model="editingMenuLabel"
+              @blur="saveMenuLabel"
+              @keyup.enter="saveMenuLabel"
+              @keyup.escape="cancelEditMenu"
+              class="font-medium text-sm bg-white/10 border border-white/20 rounded px-2 py-0.5 w-full outline-none focus:border-blue-400"
+            />
+          </template>
+          <div v-else class="flex items-center gap-1" @dblclick.stop>
+            <p :class="['font-medium text-sm', currentPage === item.id ? 'text-white' : 'text-slate-200 group-hover:text-white']">
+              {{ item.label }}
+            </p>
+            <button
+              v-if="isAdmin"
+              @click.stop="startEditMenu(item.id, item.label)"
+              class="text-xs opacity-0 group-hover:opacity-50 hover:!opacity-100 text-slate-500 hover:text-blue-400 transition-opacity p-0.5 rounded"
+              title="编辑菜单名称（双击也可）">✎</button>
+          </div>
           <p class="text-xs text-slate-500 truncate mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
             {{ item.description }}
           </p>
@@ -193,13 +245,58 @@ async function fetchAlertCount() {
   }
 }
 
+const systemName = ref(localStorage.getItem('sidebar_system_name') || 'X10增长引擎')
+const subtitle = ref(localStorage.getItem('sidebar_subtitle') || '让增长可复制')
+const editingSystemName = ref(false)
+const editSystemNameValue = ref('')
+const editingSubtitle = ref(false)
+const editSubtitleValue = ref('')
+
+function startEditSystemName() {
+  editSystemNameValue.value = systemName.value
+  editingSystemName.value = true
+}
+function saveSystemName() {
+  if (editSystemNameValue.value.trim()) {
+    systemName.value = editSystemNameValue.value.trim()
+    localStorage.setItem('sidebar_system_name', systemName.value)
+  }
+  editingSystemName.value = false
+}
+
+function startEditSubtitle() {
+  editSubtitleValue.value = subtitle.value
+  editingSubtitle.value = true
+}
+function saveSubtitle() {
+  if (editSubtitleValue.value.trim()) {
+    subtitle.value = editSubtitleValue.value.trim()
+    localStorage.setItem('sidebar_subtitle', subtitle.value)
+  }
+  editingSubtitle.value = false
+}
+
 const motivation = ref('每天进步一点点，终将成就非凡')
+
+// 菜单分组标题可编辑
+const menuSectionTitle = ref(localStorage.getItem('sidebar_section_title') || '核心功能')
+const editingSectionTitle = ref(false)
+const editSectionValue = ref('')
+
+function saveSectionTitle() {
+  if (editSectionValue.value.trim()) {
+    menuSectionTitle.value = editSectionValue.value.trim()
+    localStorage.setItem('sidebar_section_title', menuSectionTitle.value)
+  }
+  editingSectionTitle.value = false
+}
 const isEditing = ref(false)
 const editValue = ref('')
 
 const stats = ref({ pendingTasks: 0, completionRate: 0 })
 
-const menuItems = [
+// 侧边栏菜单可编辑（管理员权限）
+const DEFAULT_MENU_ITEMS = [
   { id: 'home', label: '首页', emoji: '🏠', description: '控制台与数据概览' },
   { id: 'calendar', label: 'X10成长日程', emoji: '📅', description: '查看和管理每日任务' },
   { id: 'reports', label: 'X10成长复盘', emoji: '📝', description: '每日复盘/每周复盘/月度复盘' },
@@ -209,6 +306,37 @@ const menuItems = [
   { id: 'training', label: 'X10成长中心', emoji: '🎓', description: '知识库与BD自查手册' },
   { id: 'settings', label: '设置', emoji: '⚙', description: '系统设置' }
 ]
+
+function loadMenuItems(): any[] {
+  const saved = localStorage.getItem('sidebar_menu_items')
+  if (saved) {
+    try { return JSON.parse(saved) } catch {}
+  }
+  return [...DEFAULT_MENU_ITEMS]
+}
+
+const menuItems = ref(loadMenuItems())
+const editingMenuId = ref<string | null>(null)
+const editingMenuLabel = ref('')
+
+function startEditMenu(id: string, currentLabel: string) {
+  editingMenuId.value = id
+  editingMenuLabel.value = currentLabel
+}
+
+function saveMenuLabel() {
+  if (!editingMenuLabel.value.trim()) return
+  const idx = menuItems.value.findIndex(m => m.id === editingMenuId.value)
+  if (idx >= 0) {
+    menuItems.value[idx].label = editingMenuLabel.value.trim()
+    localStorage.setItem('sidebar_menu_items', JSON.stringify(menuItems.value))
+  }
+  editingMenuId.value = null
+}
+
+function cancelEditMenu() {
+  editingMenuId.value = null
+}
 
 function startEdit() {
   editValue.value = motivation.value

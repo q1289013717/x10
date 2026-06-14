@@ -43,6 +43,7 @@
                 <option value="">请选择运营平台</option>
                 <option v-for="p in platforms" :key="p" :value="p">{{ p }}</option>
               </select>
+              <input v-if="resource.platform === '其他'" v-model="resource.platformOther" placeholder="请填写具体平台名称..." class="w-full h-10 px-3 mt-2 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
             </div>
             <div>
               <label class="text-xs font-medium text-slate-500 mb-1 block">联系方式 <span class="text-red-400">*</span></label>
@@ -69,6 +70,7 @@
                 <option value="">请选择核心类目</option>
                 <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
               </select>
+              <input v-if="resource.category === '其他'" v-model="resource.categoryOther" placeholder="请填写具体类目..." class="w-full h-10 px-3 mt-2 rounded-lg border border-slate-200 text-sm outline-none focus:border-blue-500" />
             </div>
           </div>
           <div class="mt-4">
@@ -127,14 +129,14 @@
                   {{ r.name }}
                   <span class="text-xs text-slate-400 font-normal">{{ r.code }}</span>
                 </h3>
-                <p class="text-sm text-slate-500 mt-0.5">{{ r.platform }} · {{ r.category }}</p>
+                <p class="text-sm text-slate-500 mt-0.5">{{ displayPlatform(r) }} · {{ displayCategory(r) }}</p>
               </div>
               <button @click="deleteResource(r.id)" class="text-slate-300 hover:text-red-500 text-sm transition-colors">🗑</button>
             </div>
             <div class="flex flex-wrap gap-2 text-xs">
               <span class="px-2 py-0.5 bg-slate-100 rounded text-slate-600">粉丝 {{ formatFans(r.fansCount) }}</span>
               <span v-if="r.gmv" class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded">GMV ¥{{ r.gmv }}万</span>
-              <span class="px-2 py-0.5 bg-green-50 text-green-600 rounded">{{ r.category }}</span>
+              <span class="px-2 py-0.5 bg-green-50 text-green-600 rounded">{{ displayCategory(r) }}</span>
             </div>
             <div class="mt-3 pt-3 border-t border-slate-50 text-xs text-slate-400 space-y-1">
               <p v-if="r.phone">📞 {{ r.phone }}</p>
@@ -206,6 +208,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import AppLayout from '@/layouts/AppLayout.vue'
+import api from '@/api'
 
 const activeTab = ref('all')
 const search = ref('')
@@ -221,17 +224,19 @@ const tabs = [
 
 const EMPTY_RESOURCE = {
   name: '', date: new Date().toISOString().split('T')[0], code: '',
-  accountName: '', platform: '', phone: '', wechat: '',
-  fansCount: '', category: '', fansProfile: '', gmv: '',
+  accountName: '', platform: '', platformOther: '', phone: '', wechat: '',
+  fansCount: '', category: '', categoryOther: '', fansProfile: '', gmv: '',
   reachChannel: '', firstContactTime: '', lastFollowTime: '', nextFollowTime: ''
 }
 
 const resource = ref({ ...EMPTY_RESOURCE })
 const resources = ref<any[]>([])
+const loading = ref(false)
 
 const filteredResources = computed(() => {
-  if (!search.value) return resources.value
-  return resources.value.filter(r =>
+  const all = activeTab.value === 'mine' ? resources.value.filter((r: any) => r.is_mine) : resources.value
+  if (!search.value) return all
+  return all.filter((r: any) =>
     r.name?.toLowerCase().includes(search.value.toLowerCase()) ||
     r.code?.toLowerCase().includes(search.value.toLowerCase()) ||
     r.category?.toLowerCase().includes(search.value.toLowerCase()) ||
@@ -241,34 +246,119 @@ const filteredResources = computed(() => {
 
 const platformStats = computed(() => {
   const map: Record<string, number> = {}
-  resources.value.forEach(r => { const p = r.platform; if (p) map[p] = (map[p] || 0) + 1 })
+  resources.value.forEach((r: any) => {
+    const p = r.platform === '其他' && r.platformOther ? r.platformOther : r.platform
+    if (p) map[p] = (map[p] || 0) + 1
+  })
   return Object.entries(map).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count)
 })
 
 const categoryStats = computed(() => {
   const map: Record<string, number> = {}
-  resources.value.forEach(r => { const c = r.category; if (c) map[c] = (map[c] || 0) + 1 })
+  resources.value.forEach((r: any) => {
+    const c = r.category === '其他' && r.categoryOther ? r.categoryOther : r.category
+    if (c) map[c] = (map[c] || 0) + 1
+  })
   return Object.entries(map).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count)
 })
 
 const totalFans = computed(() => {
-  return resources.value.reduce((sum, r) => sum + parseFloat(r.fansCount || '0'), 0).toFixed(1)
+  return resources.value.reduce((sum: number, r: any) => sum + parseFloat(r.fansCount || r.fans_count || '0'), 0).toFixed(1)
 })
 
 function formatFans(n: number) { if (!n) return '0'; return n >= 10000 ? (n / 10000).toFixed(1) + '万' : n.toLocaleString() }
 
-function saveResource() {
-  if (!resource.value.name) return
-  resources.value.unshift({ ...resource.value, id: Date.now().toString() })
-  resource.value = { ...EMPTY_RESOURCE, date: new Date().toISOString().split('T')[0] }
-  save()
+// 显示平台时，如果是"其他"则显示自填内容
+function displayPlatform(r: any) {
+  return r.platform === '其他' && r.platformOther ? r.platformOther : (r.platform || '-')
+}
+function displayCategory(r: any) {
+  return r.category === '其他' && r.categoryOther ? r.categoryOther : (r.category || '-')
 }
 
-function deleteResource(id: string) { resources.value = resources.value.filter(r => r.id !== id); save() }
-function save() { localStorage.setItem('daren_resources', JSON.stringify(resources.value)) }
+async function saveResource() {
+  if (!resource.value.name) return
+  loading.value = true
+  try {
+    // 组装后端字段（snake_case）
+    const payload: any = {
+      name: resource.value.name,
+      daren_id: resource.value.code,
+      account_name: resource.value.accountName,
+      platform: resource.value.platform === '其他' ? (resource.value.platformOther || '其他') : resource.value.platform,
+      contact: resource.value.phone,
+      wechat: resource.value.wechat,
+      fans_count: parseFloat(resource.value.fansCount) || 0,
+      category: resource.value.category === '其他' ? (resource.value.categoryOther || '其他') : resource.value.category,
+      fans_profile: resource.value.fansProfile,
+      gmv_monthly: parseFloat(resource.value.gmv) || 0,
+      reach_channel: resource.value.reachChannel,
+      first_contact_time: resource.value.firstContactTime || null,
+      last_follow_time: resource.value.lastFollowTime || null,
+      next_follow_time: resource.value.nextFollowTime || null,
+      // 保存原始选择值和自填值（用extra_data扩展字段）
+      platform_raw: resource.value.platform,
+      platform_other: resource.value.platformOther,
+      category_raw: resource.value.category,
+      category_other: resource.value.categoryOther,
+    }
+    await api.post('/daren/resources', payload)
+    resource.value = { ...EMPTY_RESOURCE, date: new Date().toISOString().split('T')[0] }
+    activeTab.value = 'mine'
+    await fetchResources()
+    alert('录入成功！')
+  } catch (e: any) {
+    // 降级到本地存储
+    const r = { ...resource.value, id: Date.now().toString() }
+    resources.value.unshift(r)
+    localStorage.setItem('daren_resources', JSON.stringify(resources.value))
+    resource.value = { ...EMPTY_RESOURCE, date: new Date().toISOString().split('T')[0] }
+    alert('后端暂不可用，已保存到本地')
+  } finally {
+    loading.value = false
+  }
+}
 
-onMounted(() => {
-  const saved = localStorage.getItem('daren_resources')
-  if (saved) { try { resources.value = JSON.parse(saved) } catch {} }
-})
+async function deleteResource(id: string) {
+  if (!confirm('确定删除该达人资源？')) return
+  try {
+    await api.delete(`/daren/resources/${id}`)
+    await fetchResources()
+  } catch {
+    resources.value = resources.value.filter((r: any) => r.id !== id)
+    localStorage.setItem('daren_resources', JSON.stringify(resources.value))
+  }
+}
+
+async function fetchResources() {
+  loading.value = true
+  try {
+    const res = await api.get('/daren/resources', { params: { limit: 200 } })
+    resources.value = (res.data || []).map((r: any) => ({
+      ...r,
+      // 映射字段
+      code: r.daren_id || r.code,
+      accountName: r.account_name || r.accountName,
+      phone: r.contact || r.phone,
+      fansCount: r.fans_count || r.fansCount,
+      fansProfile: r.fans_profile || r.fansProfile,
+      gmv: r.gmv_monthly || r.gmv,
+      reachChannel: r.reach_channel || r.reachChannel,
+      firstContactTime: r.first_contact_time || r.firstContactTime,
+      lastFollowTime: r.last_follow_time || r.lastFollowTime,
+      nextFollowTime: r.next_follow_time || r.nextFollowTime,
+      platformOther: r.platform_other || '',
+      categoryOther: r.category_other || '',
+      is_mine: true, // 暂时标记，后端会返回created_by
+    }))
+  } catch {
+    // 降级到本地
+    const saved = localStorage.getItem('daren_resources')
+    if (saved) { try { resources.value = JSON.parse(saved) } catch {} }
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(fetchResources)
 </script>

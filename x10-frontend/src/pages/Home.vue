@@ -353,9 +353,9 @@ async function loadAlerts() {
 }
 
 const stats = ref({
-  todayTarget: parseInt(localStorage.getItem('daily_target') || '50000'),
+  todayTarget: parseInt(localStorage.getItem('daily_target') || '500000'),
   todayCompleted: 0,
-  weekTarget: parseInt(localStorage.getItem('daily_target') || '50000') * 7,
+  weekTarget: parseInt(localStorage.getItem('daily_target') || '500000') * 7,
   weekCompleted: 0,
   pendingTasks: 0,
   completedTasks: 0,
@@ -392,13 +392,15 @@ onMounted(async () => {
     await taskStore.fetchTasksByDate(today)
 
     const dayData = taskStore.tasks[today]
-    const savedDailyTarget = parseInt(localStorage.getItem('daily_target') || '50000')
+    const savedDailyTarget = parseInt(localStorage.getItem('daily_target') || '500000')
     if (dayData) {
       stats.value.todayTarget = dayData.targetAmount || savedDailyTarget
       stats.value.todayCompleted = dayData.completedAmount || 0
       stats.value.pendingTasks = dayData.tasks?.filter((t: any) => t.status === 'pending').length || 0
       stats.value.completedTasks = dayData.tasks?.filter((t: any) => t.status === 'completed').length || 0
       stats.value.riskTasks = dayData.tasks?.filter((t: any) => t.risk && t.risk !== '无').length || 0
+    } else {
+      stats.value.todayTarget = savedDailyTarget
     }
 
     // Load recent 7 days
@@ -419,6 +421,9 @@ onMounted(async () => {
       }
     }
     recentTasks.value = recents
+
+    // 确保周目标也同步
+    stats.value.weekTarget = savedDailyTarget * 7
   } catch (e) {
     console.error('首页加载数据失败:', e)
     // 使用默认显示
